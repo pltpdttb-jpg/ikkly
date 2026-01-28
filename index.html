@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAMA V.2 - AI Sale Assistant (Enhanced)</title>
+    <title>MAMA V.2 - AI Sale Assistant (Secured)</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -119,6 +119,22 @@
                 bottom: 0;
                 overflow: hidden;
             }
+        }
+        
+        /* Passcode input style */
+        .passcode-input {
+            letter-spacing: 0.5em;
+            text-align: center;
+        }
+        
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
         }
     </style>
 </head>
@@ -238,7 +254,8 @@
             money: '<i class="fas fa-money-bill-wave text-emerald-500"></i>',
             hospital: '<i class="fas fa-hospital text-rose-500"></i>',
             clock: '<i class="fas fa-clock text-amber-500"></i>',
-            chartPie: '<i class="fas fa-chart-pie text-purple-500"></i>'
+            chartPie: '<i class="fas fa-chart-pie text-purple-500"></i>',
+            lock: '<i class="fas fa-lock text-amber-500"></i>'
         };
 
         // --- Supabase Configuration ---
@@ -285,10 +302,14 @@
         class MAMAV2Enhanced {
             constructor() {
                 this.state = {
+                    // Passcode related states
+                    passcodeVerified: false,
+                    showPasscodeForm: true,
+                    // Existing states
                     currentApiKey: "",
                     isSetup: false,
                     userProfile: { rh: "", zone: "" },
-                    activeTab: "ice_breaking", // Start with Ice Breaking as per requirements
+                    activeTab: "ice_breaking",
                     loading: false,
                     aiResponse: "",
                     error: "",
@@ -361,6 +382,114 @@
                 }
                 this.render();
             }
+            
+            // ========== PASSCODE METHODS ==========
+            
+            verifyPasscode(input) {
+                // Passcode ถูกฝังในโค้ด frontend
+                const PASSCODE = "2026";
+                return input === PASSCODE;
+            }
+            
+            handlePasscodeSubmit(passcode) {
+                if (this.verifyPasscode(passcode)) {
+                    this.setState({ 
+                        passcodeVerified: true,
+                        showPasscodeForm: false 
+                    });
+                    return true;
+                } else {
+                    // แสดงเอฟเฟกต์สั่นเมื่อรหัสผิด
+                    const input = document.getElementById('passcode-input');
+                    if (input) {
+                        input.classList.add('shake');
+                        setTimeout(() => {
+                            input.classList.remove('shake');
+                            input.value = '';
+                            input.focus();
+                        }, 500);
+                    }
+                    return false;
+                }
+            }
+            
+            submitPasscode() {
+                const passcodeInput = document.getElementById('passcode-input');
+                if (passcodeInput) {
+                    const passcode = passcodeInput.value;
+                    if (this.handlePasscodeSubmit(passcode)) {
+                        this.render();
+                    }
+                }
+            }
+            
+            logout() {
+                this.setState({
+                    passcodeVerified: false,
+                    showPasscodeForm: true,
+                    isSetup: false,
+                    userProfile: { rh: "", zone: "" }
+                });
+                localStorage.removeItem('mama_v2_state');
+                this.render();
+            }
+            
+            // ========== RENDER PASSCODE FORM ==========
+            
+            renderPasscodeForm() {
+                return `
+                    <div class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center p-4">
+                        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 md:p-8">
+                            <div class="flex flex-col items-center mb-8">
+                                <div class="w-20 h-20 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-xl">
+                                    ${ICONS.shield.replace('text-amber-500', 'text-white')}
+                                </div>
+                                <h1 class="text-2xl font-black text-slate-900 tracking-tight">MAMA V.2</h1>
+                                <p class="text-xs bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent font-bold tracking-[0.2em] uppercase mt-2">ACCESS VERIFICATION</p>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <div class="text-center">
+                                    <p class="text-slate-600 mb-2">กรุณากรอกรหัสผ่านเพื่อเข้าใช้งานระบบ</p>
+                                    <p class="text-xs text-slate-500">ระบบนี้จำกัดการเข้าถึงสำหรับผู้ที่มีสิทธิ์เท่านั้น</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">PASSCODE</label>
+                                    <input 
+                                        type="password"
+                                        id="passcode-input"
+                                        maxlength="4"
+                                        onkeyup="if(event.key === 'Enter') app.submitPasscode()"
+                                        class="w-full border-2 border-slate-100 rounded-xl p-4 text-center text-2xl font-bold tracking-widest focus:border-sky-500 outline-none transition-all passcode-input"
+                                        placeholder="••••"
+                                        autocomplete="off"
+                                        autofocus
+                                    >
+                                    <p class="text-xs text-slate-500 mt-2 text-center">รหัสผ่านเป็นตัวเลข 4 หลัก</p>
+                                </div>
+                                
+                                <button 
+                                    onclick="app.submitPasscode()"
+                                    class="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-900/20 active:scale-95 transform transition-transform">
+                                    ตรวจสอบรหัสผ่าน ${ICONS.chevronRight}
+                                </button>
+                                
+                                <div class="pt-4 border-t border-slate-100 text-center">
+                                    <p class="text-xs text-slate-500">
+                                        สำหรับเจ้าหน้าที่ ttb และพันธมิตรเท่านั้น
+                                    </p>
+                                    <p class="text-xs text-slate-400 mt-1">
+                                        © 2024 MAMA AI Assistant v2.0
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // ========== EXISTING METHODS (แก้ไขเล็กน้อย) ==========
             
             handleInputChange(tab, field, value) {
                 this.state.forms[tab][field] = value;
@@ -845,6 +974,12 @@ Output Format:
             }
             
             renderSetupPage() {
+                // ถ้ายังไม่ได้ผ่านการตรวจสอบ passcode ให้แสดงฟอร์ม passcode
+                if (!this.state.passcodeVerified) {
+                    return this.renderPasscodeForm();
+                }
+                
+                // ถ้าผ่านแล้ว แต่ยังไม่ได้ตั้งค่า RH และ Zone ให้แสดงฟอร์มตั้งค่า
                 const rhOptions = Object.keys(RH_DATA).map(rh => 
                     `<option value="${rh}" ${this.state.userProfile.rh === rh ? 'selected' : ''}>${rh}</option>`
                 ).join('');
@@ -864,13 +999,17 @@ Output Format:
                                 </div>
                                 <h1 class="text-3xl font-black text-slate-900 tracking-tight">MAMA V.2</h1>
                                 <p class="text-xs bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent font-bold tracking-[0.2em] uppercase mt-2">Enhanced AI Sale Assistant</p>
+                                <div class="mt-2 text-xs text-slate-500 flex items-center gap-1">
+                                    ${ICONS.lock.replace('text-amber-500', 'text-slate-400')}
+                                    <span>รหัสผ่านถูกตรวจสอบแล้ว</span>
+                                </div>
                             </div>
                             
                             <div class="space-y-6">
                                 <div class="text-center mb-6">
                                     <p class="text-slate-600 mb-4">ระบบนี้ใช้ Supabase สำหรับการจัดการ API Key Rotation</p>
                                     <div class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
-                                        ${ICONS.shield.replace('text-sky-500', 'text-slate-600')}
+                                        ${ICONS.shield.replace('text-amber-500', 'text-slate-600')}
                                         <span class="text-sm font-medium text-slate-700">Secure API Management</span>
                                     </div>
                                 </div>
@@ -902,18 +1041,20 @@ Output Format:
                                 </div>
                                 
                                 <div class="pt-4 border-t border-slate-100">
-                                    <p class="text-sm text-slate-600 mb-4 text-center">
-                                        ระบบใช้ Supabase สำหรับ API Key Rotation โดยอัตโนมัติ
-                                    </p>
                                     <button 
                                         onclick="if(app.state.userProfile.zone) app.setState({ isSetup: true }); else alert('กรุณาเลือกโซนให้ครบ')"
                                         class="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-900/20 active:scale-95 transform transition-transform">
                                         เริ่มใช้งานระบบ ${ICONS.chevronRight}
                                     </button>
                                     
-                                    <div class="mt-6 text-center">
+                                    <div class="mt-6 flex justify-between items-center">
+                                        <button onclick="app.logout()" class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
+                                            ${ICONS.rotate}
+                                            <span>ออกจากระบบ</span>
+                                        </button>
+                                        
                                         <a href="javascript:void(0)" onclick="app.showNonAIPopup()" class="text-sm text-slate-500 hover:text-slate-700 underline">
-                                            คลิกที่นี่เพื่อเลือกใช้ระบบ Non-AI กรณีไม่มี API Key
+                                            ระบบ Non-AI
                                         </a>
                                     </div>
                                 </div>
@@ -956,6 +1097,10 @@ Output Format:
                                         ${ICONS.map}
                                         <span>${zone}</span>
                                     </div>
+                                    <div class="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                                        ${ICONS.lock}
+                                        <span>รหัสผ่าน: ตรวจสอบแล้ว</span>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -973,10 +1118,17 @@ Output Format:
                                 `).join('')}
                             </div>
                             
-                            <div class="p-4 border-t border-white/10">
-                                <button onclick="app.setState({ isSetup: false })" class="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white py-3">
+                            <div class="p-4 border-t border-white/10 space-y-2">
+                                <button onclick="app.setState({ isSetup: false })" 
+                                        class="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white py-3 rounded-lg hover:bg-white/5 transition-colors">
                                     ${ICONS.rotate}
                                     <span>เปลี่ยนพื้นที่</span>
+                                </button>
+                                
+                                <button onclick="app.logout()" 
+                                        class="w-full flex items-center justify-center gap-2 text-rose-400 hover:text-rose-300 py-3 rounded-lg hover:bg-white/5 transition-colors border-t border-white/10 pt-3">
+                                    ${ICONS.alert}
+                                    <span>ออกจากระบบ</span>
                                 </button>
                             </div>
                         </aside>
@@ -1150,7 +1302,15 @@ Output Format:
                 }
                 
                 try {
-                    const html = this.state.isSetup ? this.renderMainPage() : this.renderSetupPage();
+                    let html;
+                    if (!this.state.passcodeVerified) {
+                        html = this.renderPasscodeForm();
+                    } else if (!this.state.isSetup) {
+                        html = this.renderSetupPage();
+                    } else {
+                        html = this.renderMainPage();
+                    }
+                    
                     root.innerHTML = html;
                     
                     console.log("Render successful!");
@@ -1176,9 +1336,11 @@ Output Format:
                     const savedState = localStorage.getItem('mama_v2_state');
                     if (savedState) {
                         const parsed = JSON.parse(savedState);
-                        // Don't restore API key from localStorage for security
-                        const { currentApiKey, ...rest } = parsed;
-                        this.setState({ ...rest });
+                        // ตรวจสอบว่ามี passcodeVerified ใน savedState หรือไม่
+                        this.setState({ 
+                            ...parsed,
+                            currentApiKey: parsed.currentApiKey || "" // อย่า restore API key
+                        });
                     }
                 } catch (e) {
                     console.log("No saved state found");
@@ -1189,7 +1351,7 @@ Output Format:
                 this.setState = (newState) => {
                     originalSetState(newState);
                     try {
-                        const stateToSave = { ...this.state };
+                        const stateToSave = { ...this.state, ...newState };
                         delete stateToSave.currentApiKey; // Don't save API key
                         localStorage.setItem('mama_v2_state', JSON.stringify(stateToSave));
                     } catch (e) {
@@ -1204,7 +1366,7 @@ Output Format:
         // Initialize the app when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
             window.app = new MAMAV2Enhanced();
-            console.log("MAMA V.2 Enhanced App loaded successfully!");
+            console.log("MAMA V.2 Enhanced App with Passcode loaded successfully!");
         });
     </script>
 </body>
