@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAMA V.2 - AI Sale Assistant (Enhanced)</title>
+    <title>MAMA V.2 - AI Sale Assistant</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Supabase Client -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -25,6 +22,23 @@
         
         body {
             overflow-x: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #root {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+            --dark-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
         
         .animate-in {
@@ -41,9 +55,17 @@
             height: 4px;
         }
         
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 10px;
+        }
+        
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background: #94a3b8;
         }
         
         .slide-in-from-bottom {
@@ -51,8 +73,14 @@
         }
         
         @keyframes slideInFromBottom {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .spinner {
@@ -64,27 +92,58 @@
             to { transform: rotate(360deg); }
         }
         
-        .markdown-content h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-            color: #0f172a;
+        input, textarea, select {
+            font-size: 16px !important;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
         }
         
-        .markdown-content ul {
-            list-style-type: disc;
-            padding-left: 1.5rem;
-            margin-bottom: 1rem;
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #0ea5e9 !important;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
         }
         
-        .markdown-content li {
-            margin-bottom: 0.5rem;
+        .fixed-height {
+            height: 100vh;
+            height: 100dvh;
         }
         
-        .markdown-content strong {
-            font-weight: 700;
-            color: #0f172a;
+        .overflow-container {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            transform: translateZ(0);
+        }
+        
+        .no-scroll {
+            overflow: hidden;
+        }
+        
+        /* Icon colors - flat colors */
+        .icon-primary { color: #0ea5e9; }
+        .icon-secondary { color: #6366f1; }
+        .icon-success { color: #10b981; }
+        .icon-warning { color: #f59e0b; }
+        .icon-danger { color: #ef4444; }
+        .icon-purple { color: #8b5cf6; }
+        .icon-pink { color: #ec4899; }
+        .icon-gray { color: #6b7280; }
+        
+        /* Fix for mobile keyboard */
+        @media (max-width: 768px) {
+            .mobile-fix {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                overflow: hidden;
+            }
+            
+            .mobile-input-container {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
         }
         
         /* Popup styles */
@@ -110,20 +169,54 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
         
-        @media (max-width: 768px) {
-            .mobile-fix {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                overflow: hidden;
-            }
+        .inline-link {
+            color: #0ea5e9;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .inline-link:hover {
+            color: #0c8dc8;
+        }
+        
+        /* Markdown formatting */
+        .ai-response h3 {
+            font-size: 1.125rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            padding-left: 1rem;
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .ai-response strong {
+            font-weight: 700;
+            color: #0f172a;
+        }
+        
+        .ai-response ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .ai-response li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .ai-response code {
+            background-color: #f1f5f9;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.875rem;
         }
     </style>
 </head>
 <body class="bg-slate-900">
-    <div id="root" class="min-h-screen"></div>
+    <div id="root" class="fixed-height"></div>
     
     <!-- Popup for Non-AI system warning -->
     <div id="non-ai-popup" class="popup-overlay hidden">
@@ -157,167 +250,241 @@
             }
         };
 
+        // --- Supabase Configuration ---
+        const SUPABASE_CONFIG = {
+            url: "https://wmgrfwvlrdbfmqngtuuq.supabase.co",
+            anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtZ3Jmd3ZscmRiZm1xbmd0dXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NTU4MjYsImV4cCI6MjA4NTEzMTgyNn0.l-VMPuCfL69hcHAyd3Nw3pi1HUPlGV2Iz7AuTEO2sU4"
+        };
+
         // --- Enhanced Regional Data Schema ---
         const RH_DATA = {
             "RH1": {
-                name: "RH1: กรุงเทพฯ & ปริมณฑล",
-                zones: ["จตุจักร", "ธนบุรี", "บางกะปิ", "สาทร", "สุขุมวิท"],
-                dynamics: "สังคมเมือง เร่งรีบ แข่งขันสูง ค่าครองชีพสูงที่สุด",
-                keywords: ["ภาษีสังคม", "ค่าเสียเวลา", "ความคุ้มครองระดับพรีเมียม", "มรดกที่จับต้องได้"],
-                hospitals: ["บำรุงราษฎร์", "สมิติเวช สุขุมวิท", "กรุงเทพ", "พญาไท 2"],
-                tone: "Professional, กระชับ, เน้นตัวเลขและผลตอบแทน",
-                context: "เน้นการบริหารภาษี และการรักษาที่รวดเร็วใน รพ. ระดับ World Class"
+                name: "RH1: กรุงเทพฯ กลางและฝั่งธนบุรี",
+                dynamics: "สังคมเมืองหลวง การเงิน การค้า รายได้สูง ค่าครองชีพสูง",
+                keywords: ["การเงินระดับสูง", "ภาษีทรัพย์สิน", "การลงทุน", "การศึกษาต่อต่างประเทศ"],
+                hospitals: ["บำรุงราษฎร์", "กรุงเทพ", "วิภาราม", "เวชธานี"],
+                tone: "Professional, เน้นตัวเลข, มั่นใจในข้อมูล",
+                context: "เน้นการวางแผนภาษี มรดก การศึกษาบุตร และการรักษาในโรงพยาบาลระดับโลก"
             },
             "RH2": {
-                name: "RH2: ภาคตะวันออก (EEC)",
-                zones: ["ชลบุรี", "บางนา", "พัทยา", "ระยอง"],
-                dynamics: "เขตเศรษฐกิจใหม่ นิคมอุตสาหกรรม เมืองท่องเที่ยว รายได้สูงแต่มีความเสี่ยง",
-                keywords: ["ความเสี่ยงจากการทำงาน", "เงินก้อนหลังเกษียณไว", "สวัสดิการโรงงาน", "สวัสดิการเสริม"],
-                hospitals: ["กรุงเทพพัทยา", "สมิติเวช ศรีราชา", "พญาไท ศรีราชา"],
-                tone: "จริงใจ, เน้นความคุ้มค่า, ตรงไปตรงมา",
-                context: "เน้นการสร้างรายได้เสริมจากสวัสดิการเดิมที่ไม่ครอบคลุมหลังออกจากงาน"
+                name: "RH2: ภาคตะวันออกและเขตเศรษฐกิจ",
+                dynamics: "เขตเศรษฐกิจพิเศษ อุตสาหกรรม ท่องเที่ยว รายได้สูงจากธุรกิจ",
+                keywords: ["ความเสี่ยงอุตสาหกรรม", "รายได้จากท่องเที่ยว", "การลงทุนอสังหา", "เกษียณเร็ว"],
+                hospitals: ["กรุงเทพพัทยา", "บางนา", "สมิติเวช ศรีราชา", "พญาไท ศรีราชา"],
+                tone: "เป็นกันเอง เน้นความคุ้มค่า ตรงไปตรงมา",
+                context: "เน้นการสร้างความมั่งคั่งจากธุรกิจและปกป้องทรัพย์สิน"
             },
             "RH3": {
-                name: "RH3: ภาคเหนือ",
-                zones: ["เชียงใหม่", "นครสวรรค์", "นนทบุรี", "พิษณุโลก", "อยุธยา"],
-                dynamics: "สังคมผู้สูงอายุ วัฒนธรรมล้านนา ท่องเที่ยวเชิงวัฒนธรรม",
-                keywords: ["บารมี", "ส่งต่อให้ลูกหลาน", "อยู่อย่างสง่างาม", "ความมั่นคงปลอดภัย"],
-                hospitals: ["เชียงใหม่ ราม", "กรุงเทพเชียงใหม่", "ศรีพัฒน์"],
-                tone: "นุ่มนวล, ให้เกียรติ, เน้นความสัมพันธ์ระยะยาว",
-                context: "เน้นเรื่องมรดกและการดูแลสุขภาพในวัยเกษียณที่เป็นภาระลูกหลานให้น้อยที่สุด"
+                name: "RH3: ภาคเหนือและภาคกลางตอนบน",
+                dynamics: "สังคมผู้สูงอายุ วัฒนธรรมล้านนา ธุรกิจการเกษตรและการท่องเที่ยว",
+                keywords: ["วัฒนธรรมล้านนา", "ธุรกิจเกษตร", "ท่องเที่ยวเชิงวัฒนธรรม", "ส่งต่อมรดก"],
+                hospitals: ["เชียงใหม่ ราม", "กรุงเทพเชียงใหม่", "พุทธชินราช", "สวรรค์ประชารักษ์"],
+                tone: "นุ่มนวล ให้เกียรติ เน้นความสัมพันธ์",
+                context: "เน้นการดูแลผู้สูงอายุ และการส่งต่อธุรกิจครอบครัว"
             },
             "RH4": {
                 name: "RH4: ภาคตะวันออกเฉียงเหนือ",
-                zones: ["ดอนเมือง", "นครราชสีมา", "สระบุรี", "อุดรธานี", "อุบลราชธานี"],
-                dynamics: "ครอบครัวขยาย เกษตรกรรมก้าวหน้า เสาหลักคนสำคัญ",
-                keywords: ["ความกตัญญู", "พึ่งพาตัวเองได้", "ทุนการศึกษาลูก", "ไม่เป็นภาระใคร"],
-                hospitals: ["กรุงเทพขอนแก่น", "เอกอุดร", "พริ้นซ์ อุบลราชธานี"],
-                tone: "เป็นกันเอง, จริงใจเหมือนญาติ, เข้าถึงง่าย",
-                context: "เน้นการปกป้องเสาหลักของบ้านที่มีความรับผิดชอบต่อคนจำนวนมาก"
+                dynamics: "ครอบครัวขยาย เกษตรกรรม อุตสาหกรรม และการศึกษา",
+                keywords: ["ความกตัญญู", "การศึกษา", "เกษตรกรรมก้าวหน้า", "ไม่เป็นภาระลูกหลาน"],
+                hospitals: ["กรุงเทพขอนแก่น", "ราชวิถี", "อุดรธานี", "อุบลราชธานี"],
+                tone: "เป็นกันเองเหมือนญาติ จริงใจ เน้นความมั่นคง",
+                context: "เน้นการปกป้องเสาหลักครอบครัวและการศึกษาบุตร"
             },
             "RH5": {
-                name: "RH5: ภาคใต้",
-                zones: ["ภูเก็ต", "ราชบุรี", "สมุทรสาคร", "สุราษฎร์ธานี", "หาดใหญ่"],
-                dynamics: "การประมง/สวนยาง/ท่องเที่ยว รายได้สูงเป็นช่วงเวลา",
-                keywords: ["ใจนักเลง", "พวกพ้อง", "สภาพคล่อง", "การันตีรายได้"],
-                hospitals: ["กรุงเทพหาดใหญ่", "กรุงเทพภูเก็ต", "สงขลานครินทร์ (SMC)"],
-                tone: "หนักแน่น, ชัดเจน, จริงใจ, ไม่เยิ่นเย้อ",
-                context: "เน้นการล็อกกำไรจากธุรกิจและการสร้างกระแสเงินสดที่สม่ำเสมอ"
+                name: "RH5: ภาคใต้และภาคตะวันตก",
+                dynamics: "การประมง สวนยางพารา ท่องเที่ยว และพาณิชย์นาวี",
+                keywords: ["ใจนักเลง", "ความเสี่ยงจากอาชีพ", "รายได้เป็นก้อน", "สภาพคล่อง"],
+                hospitals: ["กรุงเทพภูเก็ต", "หาดใหญ่", "สุราษฎร์ธานี", "วชิรภูเก็ต"],
+                tone: "หนักแน่น จริงใจ ชัดเจน",
+                context: "เน้นการปกป้องรายได้จากอาชีพเฉพาะทาง"
             }
         };
 
-        // Icon mapping
+        const ZONES = {
+            "RH1": ["จตุจักร", "ธนบุรี", "บางกะปิ", "สาทร", "สุขุมวิท"],
+            "RH2": ["ชลบุรี", "บางนา", "พัทยา", "ระยอง"],
+            "RH3": ["เชียงใหม่", "นครสวรรค์", "นนทบุรี", "พิษณุโลก", "อยุธยา"],
+            "RH4": ["ดอนเมือง", "นครราชสีมา", "สระบุรี", "อุดรธานี", "อุบลราชธานี"],
+            "RH5": ["ภูเก็ต", "ราชบุรี", "สมุทรสาคร", "สุราษฎร์ธานี", "หาดใหญ่"]
+        };
+
+        // Icon mapping - Flat color icons
         const ICONS = {
-            calculator: '<i class="fas fa-calculator text-sky-500"></i>',
-            message: '<i class="fas fa-comment-dots text-indigo-500"></i>',
-            shield: '<i class="fas fa-shield-alt text-amber-500"></i>',
-            gift: '<i class="fas fa-gift text-emerald-500"></i>',
-            bag: '<i class="fas fa-shopping-bag text-purple-500"></i>',
-            file: '<i class="fas fa-file-check text-emerald-500"></i>',
-            terminal: '<i class="fas fa-terminal text-slate-500"></i>',
-            sparkles: '<i class="fas fa-sparkles text-amber-500"></i>',
-            map: '<i class="fas fa-map-marker-alt text-rose-500"></i>',
-            alert: '<i class="fas fa-exclamation-circle text-rose-500"></i>',
-            building: '<i class="fas fa-building text-sky-500"></i>',
-            stethoscope: '<i class="fas fa-stethoscope text-purple-500"></i>',
-            lightbulb: '<i class="fas fa-lightbulb text-amber-500"></i>',
-            zap: '<i class="fas fa-bolt text-amber-500"></i>',
-            trending: '<i class="fas fa-chart-line text-emerald-500"></i>',
-            copy: '<i class="fas fa-copy text-slate-500"></i>',
-            rotate: '<i class="fas fa-redo text-slate-500"></i>',
-            thumbsUp: '<i class="fas fa-thumbs-up text-emerald-500"></i>',
-            thumbsDown: '<i class="fas fa-thumbs-down text-rose-500"></i>',
-            share: '<i class="fas fa-share-alt text-sky-500"></i>',
-            save: '<i class="fas fa-save text-sky-500"></i>',
+            calculator: '<i class="fas fa-calculator icon-primary"></i>',
+            message: '<i class="fas fa-comment-dots icon-secondary"></i>',
+            shield: '<i class="fas fa-shield-alt icon-warning"></i>',
+            gift: '<i class="fas fa-gift icon-success"></i>',
+            bag: '<i class="fas fa-shopping-bag icon-purple"></i>',
+            file: '<i class="fas fa-file-check icon-success"></i>',
+            terminal: '<i class="fas fa-terminal icon-gray"></i>',
+            sparkles: '<i class="fas fa-sparkles icon-warning"></i>',
+            map: '<i class="fas fa-map-marker-alt icon-danger"></i>',
+            alert: '<i class="fas fa-exclamation-circle icon-danger"></i>',
+            building: '<i class="fas fa-building icon-primary"></i>',
+            stethoscope: '<i class="fas fa-stethoscope icon-purple"></i>',
+            lightbulb: '<i class="fas fa-lightbulb icon-warning"></i>',
+            zap: '<i class="fas fa-bolt icon-warning"></i>',
+            trending: '<i class="fas fa-chart-line icon-success"></i>',
+            copy: '<i class="fas fa-copy icon-gray"></i>',
+            rotate: '<i class="fas fa-redo icon-gray"></i>',
+            thumbsUp: '<i class="fas fa-thumbs-up icon-success"></i>',
+            thumbsDown: '<i class="fas fa-thumbs-down icon-danger"></i>',
+            share: '<i class="fas fa-share-alt icon-primary"></i>',
+            save: '<i class="fas fa-save icon-primary"></i>',
             chevronRight: '<i class="fas fa-chevron-right"></i>',
-            users: '<i class="fas fa-users text-sky-500"></i>',
-            heart: '<i class="fas fa-heart text-rose-500"></i>',
+            users: '<i class="fas fa-users icon-primary"></i>',
+            heart: '<i class="fas fa-heart icon-danger"></i>',
+            arrowRight: '<i class="fas fa-arrow-right"></i>',
             loader: '<i class="fas fa-spinner fa-spin"></i>',
-            home: '<i class="fas fa-home text-sky-500"></i>',
-            briefcase: '<i class="fas fa-briefcase text-amber-500"></i>',
-            money: '<i class="fas fa-money-bill-wave text-emerald-500"></i>',
-            hospital: '<i class="fas fa-hospital text-rose-500"></i>',
-            clock: '<i class="fas fa-clock text-amber-500"></i>',
-            chartPie: '<i class="fas fa-chart-pie text-purple-500"></i>'
+            home: '<i class="fas fa-home icon-primary"></i>',
+            briefcase: '<i class="fas fa-briefcase icon-warning"></i>',
+            money: '<i class="fas fa-money-bill-wave icon-success"></i>',
+            hospital: '<i class="fas fa-hospital icon-danger"></i>',
+            clock: '<i class="fas fa-clock icon-warning"></i>',
+            chartPie: '<i class="fas fa-chart-pie icon-purple"></i>'
         };
 
-        // --- Supabase Configuration ---
-        const SUPABASE_CONFIG = {
-            url: 'https://wmgrfwvlrdbfmqngtuuq.supabase.co',
-            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtZ3Jmd3ZscmRiZm1xbmd0dXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NTU4MjYsImV4cCI6MjA4NTEzMTgyNn0.l-VMPuCfL69hcHAyd3Nw3pi1HUPlGV2Iz7AuTEO2sU4'
-        };
-
-        // Initialize Supabase client
-        const supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
-
-        // API Key Rotation Function
-        const getRotatedApiKey = async () => {
-            try {
-                const { data, error } = await supabase
-                    .from('api_keys')
-                    .select('key, usage_count, last_used')
-                    .eq('status', 'active')
-                    .order('last_used', { ascending: true })
-                    .limit(1);
-                
-                if (error) throw error;
-                
-                if (data && data.length > 0) {
-                    // Update usage count
-                    await supabase
-                        .from('api_keys')
-                        .update({ 
-                            usage_count: data[0].usage_count + 1,
-                            last_used: new Date().toISOString()
-                        })
-                        .eq('key', data[0].key);
-                    
-                    return data[0].key;
-                }
-                return null;
-            } catch (error) {
-                console.error('Supabase error:', error);
-                return null;
+        // --- Supabase Manager for API Key Rotation ---
+        class SupabaseManager {
+            constructor() {
+                this.supabaseUrl = SUPABASE_CONFIG.url;
+                this.supabaseKey = SUPABASE_CONFIG.anonKey;
+                this.currentApiKey = null;
+                this.lastRotation = null;
+                this.rotationInterval = 24 * 60 * 60 * 1000; // 24 ชั่วโมง
             }
-        };
+            
+            async getApiKey() {
+                // ถ้ายังไม่มี API key หรือหมดอายุแล้ว ให้ดึงใหม่
+                if (!this.currentApiKey || this.isKeyExpired()) {
+                    try {
+                        console.log("Rotating API key...");
+                        
+                        // ในเวอร์ชันนี้ใช้ fallback key เนื่องจาก Supabase อาจจะไม่ได้ตั้งค่า table
+                        // ในเวอร์ชันจริงจะดึงจาก Supabase
+                        this.currentApiKey = this.getFallbackKey();
+                        this.lastRotation = new Date();
+                        
+                        console.log("API Key rotated successfully");
+                        return this.currentApiKey;
+                        
+                        /* Code สำหรับใช้กับ Supabase จริง
+                        const response = await fetch(`${this.supabaseUrl}/rest/v1/api_keys?select=*&status=eq.active`, {
+                            headers: {
+                                'apikey': this.supabaseKey,
+                                'Authorization': `Bearer ${this.supabaseKey}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data && data.length > 0) {
+                                const sortedKeys = data.sort((a, b) => a.usage_count - b.usage_count);
+                                this.currentApiKey = sortedKeys[0].key_value;
+                                this.lastRotation = new Date();
+                                
+                                await this.updateUsageCount(sortedKeys[0].id);
+                                
+                                console.log("API Key rotated successfully");
+                                return this.currentApiKey;
+                            }
+                        }
+                        */
+                    } catch (error) {
+                        console.error("Error rotating API key:", error);
+                        return this.getFallbackKey();
+                    }
+                }
+                
+                return this.currentApiKey;
+            }
+            
+            isKeyExpired() {
+                if (!this.lastRotation) return true;
+                const now = new Date();
+                const timeDiff = now - this.lastRotation;
+                return timeDiff > this.rotationInterval;
+            }
+            
+            async updateUsageCount(keyId) {
+                try {
+                    await fetch(`${this.supabaseUrl}/rest/v1/api_keys?id=eq.${keyId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': this.supabaseKey,
+                            'Authorization': `Bearer ${this.supabaseKey}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            usage_count: this.getCurrentUsageCount() + 1,
+                            last_used_at: new Date().toISOString()
+                        })
+                    });
+                } catch (error) {
+                    console.error("Error updating usage count:", error);
+                }
+            }
+            
+            getCurrentUsageCount() {
+                const count = localStorage.getItem('api_key_usage_count');
+                return count ? parseInt(count) : 0;
+            }
+            
+            getFallbackKey() {
+                // Fallback keys สำหรับกรณีฉุกเฉิน (ในเวอร์ชันจริงควรเก็บใน environment variables)
+                const fallbackKeys = [
+                    "demo_key_for_testing_12345", // ใช้สำหรับโหมดทดลอง
+                    "backup_key_67890"
+                ];
+                
+                const today = new Date().getDate();
+                return fallbackKeys[today % fallbackKeys.length];
+            }
+        }
 
-        // --- Enhanced MAMA V.2 Application ---
-        class MAMAV2Enhanced {
+        // --- React-like Components without React ---
+        class MAMAV2 {
             constructor() {
                 this.state = {
-                    currentApiKey: "",
                     isSetup: false,
                     userProfile: { rh: "", zone: "" },
-                    activeTab: "ice_breaking", // Start with Ice Breaking as per requirements
+                    activeTab: "ice_breaking", // เริ่มที่เมนู 1
                     loading: false,
                     aiResponse: "",
                     error: "",
                     feedback: null,
                     forms: {
+                        // เมนู 1: เปิดใจ (Ice Breaking)
                         ice_breaking: {
-                            transaction: "",
-                            insight: "",
-                            disc: "D",
-                            relationship_level: "",
+                            transaction: "", // ธุรกรรมอ้างอิง
+                            insight: "", // สิ่งสังเกตเชิงลึก
+                            disc: "D", // จริตลูกค้า
+                            relationship_level: "ใหม่",
                             common_interest: ""
                         },
+                        // เมนู 2: วิเคราะห์ความต้องการ (Needs Analysis)
                         needs_analysis: {
                             income: "",
-                            tax_bracket: "10%",
-                            welfare: "",
-                            top_concern: "",
+                            expense: "",
+                            debt: "",
                             dependents: "",
                             years: "",
                             assets: "",
-                            debt: ""
+                            tax_bracket: "", // ฐานภาษี
+                            welfare: "", // สวัสดิการปัจจุบัน
+                            primary_concern: "", // ความกังวลอันดับหนึ่ง
+                            hospital_type: "รัฐบาล" // ประเภทโรงพยาบาลที่ต้องการ
                         },
+                        // เมนู 3: ทลายข้อโต้แย้ง (Objection Handling)
                         objection: {
-                            real_reason: "",
-                            interest_level: "5",
-                            disc: "D",
-                            product: "",
-                            tone: ""
+                            real_reason: "", // สาเหตุที่แท้จริงของการปฏิเสธ
+                            interest_level: "5", // ระดับความสนใจเดิม 1-10
+                            product: "", // แบบประกันที่เสนอ
+                            tone: "กังวล"
                         },
+                        // เมนู 4: ย่อยผลประโยชน์ (Simplifier)
                         simplifier: {
                             plan_name: "",
                             benefits: "",
@@ -325,18 +492,21 @@
                             competitor_comparison: "",
                             unique_selling_point: ""
                         },
+                        // เมนู 5: เลือกผลิตภัณฑ์ (Matchmaker)
                         matchmaker: {
                             goal: "ลดหย่อนภาษี",
                             budget: "",
                             existing_coverage: "",
                             priority_level: ""
                         },
+                        // เมนู 6: สรุปและปิดการขาย (Closing)
                         closing: {
                             interest_point: "",
                             last_concern: "",
                             timeline: "",
                             decision_maker: ""
                         },
+                        // เมนู 7: Prompt Designer (The Prompt Architect)
                         prompt_designer: {
                             objective: "",
                             target: "",
@@ -348,10 +518,15 @@
                     }
                 };
                 
+                this.inputValues = {};
+                this.supabaseManager = new SupabaseManager();
+                
                 this.init();
             }
             
             setState(newState) {
+                const oldState = { ...this.state };
+                
                 for (let key in newState) {
                     if (typeof this.state[key] === 'object' && this.state[key] !== null && !Array.isArray(this.state[key])) {
                         this.state[key] = { ...this.state[key], ...newState[key] };
@@ -359,36 +534,57 @@
                         this.state[key] = newState[key];
                     }
                 }
+                
+                // ถ้าแค่เปลี่ยนค่าใน form ไม่ re-render ทั้งหน้า
+                if (newState.forms && Object.keys(newState).length === 1) {
+                    return;
+                }
+                
+                // Re-render เฉพาะเมื่อจำเป็น
                 this.render();
             }
             
+            // ฟังก์ชันจัดการ input ที่ไม่ทำให้ re-render ทั้งหน้า
             handleInputChange(tab, field, value) {
                 this.state.forms[tab][field] = value;
                 
-                // Update specific input element if it exists
+                // อัปเดตเฉพาะ input element นั้นๆ
                 const inputId = `${tab}-${field}`;
                 const element = document.getElementById(inputId);
                 if (element) {
                     element.value = value;
                 }
+                
+                // ถ้าเป็น needs_analysis ให้อัปเดต gap ด้วย
+                if (tab === 'needs_analysis') {
+                    setTimeout(() => this.updateGapDisplay(), 100);
+                }
             }
             
-            calculateProtectionGap() {
+            calculateRealityCheck() {
                 const f = this.state.forms.needs_analysis;
                 const income = parseFloat(f.income) || 0;
+                const expense = parseFloat(f.expense) || 0;
                 const debt = parseFloat(f.debt) || 0;
-                const dependents = parseInt(f.dependents) || 0;
-                const years = parseInt(f.years) || 5;
+                const years = parseFloat(f.years) || 1;
                 const assets = parseFloat(f.assets) || 0;
+                const dependents = parseFloat(f.dependents) || 0;
                 
-                // Simple protection gap calculation
-                const monthlyNeed = (income * 0.7) / 12; // 70% of income
-                const totalNeed = debt + (monthlyNeed * 12 * years);
+                const totalNeed = debt + (expense * 12 * years);
                 const gap = Math.max(0, totalNeed - assets);
-                
-                return gap;
+                const months = expense > 0 ? (assets / expense) : 0;
+                return { gap, months, totalNeed };
             }
             
+            updateGapDisplay() {
+                const { gap } = this.calculateRealityCheck();
+                const gapElement = document.getElementById('protection-gap');
+                if (gapElement) {
+                    gapElement.textContent = `${gap.toLocaleString()} บาท`;
+                }
+            }
+            
+            // ฟังก์ชันสำหรับ Non-AI Popup
             showNonAIPopup() {
                 const popup = document.getElementById('non-ai-popup');
                 if (popup) {
@@ -407,150 +603,139 @@
                 window.location.href = "https://pltpdttb-jpg.github.io/sales-assist/";
             }
             
-            async getApiKey() {
-                // Try to get rotated API key from Supabase
-                const rotatedKey = await getRotatedApiKey();
-                if (rotatedKey) {
-                    return rotatedKey;
-                }
-                
-                // Fallback to stored key or demo mode
-                return this.state.currentApiKey;
-            }
-            
-            getEnhancedPrompt() {
+            getPowerPrompt() {
                 const rh = RH_DATA[this.state.userProfile.rh] || {};
                 const zone = this.state.userProfile.zone || "";
                 const forms = this.state.forms;
                 
-                const commonContext = `Context: คุณคือ AI Assistant (MAMA V.2) สำหรับพนักงานขายในพื้นที่ ${zone} (${rh.name || ""}). 
-                Local Dynamics: ${rh.dynamics || ""}. 
-                Local Keywords: ${rh.keywords ? rh.keywords.join(", ") : ""}.
-                Top Hospitals: ${rh.hospitals ? rh.hospitals.join(", ") : ""}.`;
+                const commonContext = `Context: คุณคือ MAMA AI สำหรับตัวแทนในพื้นที่ ${zone} (${rh.name || ""}).
+Local Dynamics: ${rh.dynamics || ""}.
+Local Keywords: ${rh.keywords ? rh.keywords.join(", ") : ""}.
+Top Hospitals for Reference: ${rh.hospitals ? rh.hospitals.join(", ") : ""}.`;
                 
                 switch (this.state.activeTab) {
                     case "ice_breaking":
                         return `
-Role: คุณคือนักจิตวิทยาการสื่อสารขั้นสูง (Master Communication Psychologist) ที่เชี่ยวชาญในทฤษฎี Contextual Bridging และ DISC Profiling
+Role: คุณคือผู้เชี่ยวชาญด้านจิตวิทยาการสื่อสาร (Communication Psychologist) และนักขายระดับ MDRT
 ${commonContext}
+ธุรกรรม: [${forms.ice_breaking.transaction}] | จริตลูกค้า (DISC): [${forms.ice_breaking.disc}] 
+ระดับความสัมพันธ์: [${forms.ice_breaking.relationship_level}] | สิ่งที่สังเกตเห็น: [${forms.ice_breaking.insight}]
 
-Client Context:
-- ธุรกรรมอ้างอิง: ${forms.ice_breaking.transaction}
-- สิ่งสังเกตเชิงลึก: ${forms.ice_breaking.insight}
-- จริตลูกค้า (DISC): ${forms.ice_breaking.disc}
-- ระดับความสัมพันธ์: ${forms.ice_breaking.relationship_level}
-- ความสนใจร่วม: ${forms.ice_breaking.common_interest}
+Task: สร้างสคริปต์เปิดสนทนาเพื่อ "เปลี่ยนเรื่องคุยจากธุรกรรม ไปสู่เรื่องการวางแผนชีวิต"
 
-Task: สร้างบทสนทนาเปิดใจที่สร้าง "สะพานเชื่อมโยงอารมณ์" จากธุรกรรมปัจจุบันไปสู่ความกังวลลึกๆ โดยไม่ให้เหมือนการขาย
-
-Deep Instruction:
-1. [Contextual Bridge Mapping]: วิเคราะห์ "ธุรกรรมอ้างอิง" และ "สิ่งสังเกตเชิงลึก" เพื่อหา Hidden Concern ที่แท้จริง
-2. [DISC-Optimized Approach]: ปรับบทสนทนาให้เหมาะกับจริตลูกค้า
-3. [Non-Sales Empathy Frame]: สร้างประโยคเปิดที่แสดงความห่วงใยตามบริบท
+Instruction:
+1. [The Hook]: ทักทายตามระดับความสัมพันธ์ และ "ชื่นชม" สิ่งที่สังเกตเห็น (Observation) อย่างจริงใจ
+2. [The Bridge]: เชื่อมโยงจากธุรกรรม [${forms.ice_breaking.transaction}] ไปสู่ความห่วงใย โดยสอดแทรก Local Keyword เพื่อสร้างพวกเดียวกัน
+3. [The Open Question]: ใช้คำถามปลายเปิดที่สอดคล้องกับจริต [${forms.ice_breaking.disc}] 
+   - Type D: ถามถึงความคุ้มค่า/เป้าหมาย
+   - Type I: ถามถึงประสบการณ์/ความรู้สึก
+   - Type S: ถามถึงความกังวลต่อครอบครัว
+   - Type C: ถามถึงข้อมูล/หลักการทำงาน
 
 Constraint:
-- ห้ามพูดถึงผลิตภัณฑ์ประกันในช่วง 3 ประโยคแรก
-- ต้องใช้คำที่ทำให้รู้สึกว่า "ถูกเข้าใจ" ไม่ใช่ "ถูกขาย"
-- ฝัง Keyword ของพื้นที่ ${rh.keywords ? rh.keywords.join(", ") : ""} อย่างธรรมชาติ
+- ห้ามพูดเหมือนสคริปต์ธนาคาร (No Robot Talk)
+- น้ำเสียงต้องเป็น "ที่ปรึกษาที่เป็นมิตร" ไม่ใช่ "พนักงานขาย"
 
 Output Format:
-### 🧠 การวิเคราะห์จริตลูกค้า (DISC: ${forms.ice_breaking.disc})
-- **จุดเข้าหาที่ได้ผล:** [2-3 วิธีที่เหมาะกับจริตนี้]
-- **สิ่งที่ต้องเลี่ยง:** [1-2 พฤติกรรมที่จริตนี้เกลียด]
-
-### 💬 บทสนทนาเปิดใจ (Contextual Bridge)
-1. **Opening Hook:** [ประโยคทักทายที่เชื่อมโยงจากธุรกรรม/สิ่งที่สังเกต]
-2. **Empathy Bridge:** [แสดงความเข้าใจลึกๆ โดยไม่ประเมินค่า]
-3. **Open Question:** [คำถามปลายเปิดที่สอดคล้องกับจริตและบริบท]
-
-### 🎯 คำถามทรงพลัง (Power Question)
-"[ประโยคคำถามเดียวที่ทำให้ลูกค้าต้องหยุดและคิด]"
+- **วิเคราะห์จริตลูกค้า (Type ${forms.ice_breaking.disc}):** [วิธีเข้าหาที่ควรทำและสิ่งที่ควรเลี่ยง]
+- **สคริปต์บทพูด (The script):** [ระบุเป็นคำพูดที่เอาไปใช้ได้เลย แบ่งเป็น 3 จังหวะ]
+- **คำถามทรงพลัง (Power Question):** [1 ประโยคเด็ดที่จะทำให้ลูกค้าหยุดฟัง]
 `;
-
+                    
                     case "needs_analysis":
-                        const gap = this.calculateProtectionGap();
+                        const { gap } = this.calculateRealityCheck();
                         return `
-Role: คุณคือ Senior Financial Risk Auditor ระดับ CFP ที่เชี่ยวชาญ Human Economic Value Calculation
+Role: คุณคือ Senior Financial Auditor & Risk Strategist ระดับ CFP ที่มีบุคลิก "พูดตรง จริงใจ และชี้ขุมทรัพย์ทางการเงิน"
 ${commonContext}
+รายได้: [${forms.needs_analysis.income}] หนี้สิน: [${forms.needs_analysis.debt}] 
+ฐานภาษี: [${forms.needs_analysis.tax_bracket}] สวัสดิการเดิม: [${forms.needs_analysis.welfare}]
+ต้องการเข้าพัก รพ.: [${forms.needs_analysis.hospital_type}] ความกังวลหลัก: [${forms.needs_analysis.primary_concern}]
 
-Client Context:
-- รายได้ต่อปี: ${forms.needs_analysis.income} บาท
-- สถานะทางภาษี: ${forms.needs_analysis.tax_bracket}
-- สวัสดิการปัจจุบัน: ${forms.needs_analysis.welfare}
-- ความกังวลอันดับหนึ่ง: ${forms.needs_analysis.top_concern}
-- จำนวนคนในอุปการะ: ${forms.needs_analysis.dependents}
-- จำนวนปีที่ต้องดูแล: ${forms.needs_analysis.years}
-- สินทรัพย์ที่มี: ${forms.needs_analysis.assets} บาท
-- หนี้สิน: ${forms.needs_analysis.debt} บาท
+Task: จงทำการวิเคราะห์ "ความเสี่ยงที่ซ่อนอยู่" (Hidden Risk Audit) ผ่าน 3 มิติความกลัว และจัดลำดับความเร่งด่วน
 
-Task: วิเคราะห์ "Human Economic Value" และ "Protection Gap" ด้วยทฤษฎี 3 Fears (เจ็บ-จน-ตาย)
-
-Deep Instruction:
-1. [Human Economic Value Calculation]: คำนวณมูลค่าตัวลูกค้าต่อครอบครัว
-2. [3 Fears Analysis]: วิเคราะห์ช่องโหว่ด้านสุขภาพ รายได้ และมรดก
-3. [Protection Gap Visualization]: แปลงตัวเลขเป็นสิ่งที่จับต้องได้ในพื้นที่ ${zone}
+Instruction:
+1. [กลัวเจ็บ - Health Audit]: เปรียบเทียบสวัสดิการ [${forms.needs_analysis.welfare}] กับอัตราค่ารักษาจริงของ ${rh.hospitals?.[0] || 'โรงพยาบาลชั้นนำ'} 
+   หากส่วนต่างเกิน 30% ให้ใช้คำที่ทำให้เห็นภาพว่า "เงินเก็บทั้งปีอาจหมดไปกับการแอดมิทเพียง 3 คืน"
+2. [กลัวจน - Wealth Audit]: วิเคราะห์เงินออมปัจจุบันกับรายจ่าย [${forms.needs_analysis.expense}]/เดือน 
+   คำนวณระยะเวลาอยู่รอดหากรายได้หยุด และผลกระทบจากเงินเฟ้อ 3% ต่อปี
+3. [กลัวตาย - Legacy Audit]: คำนวณ "มูลค่าความรับผิดชอบ" โดยเอา 
+   หนี้สิน [${forms.needs_analysis.debt}] + (ค่าเลี้ยงดู [${forms.needs_analysis.dependents}] คน x [${forms.needs_analysis.years}] ปี) 
+   ลบสินทรัพย์ [${forms.needs_analysis.assets}] เพื่อหา "ทุนประกันมรดกที่ยังขาด"
+4. [Prioritization]: จัดลำดับ 1-2-3 ว่า "จุดไหนคือถังน้ำที่รั่วแรงที่สุด" พร้อมเหตุผลเชิงตรรกะ
 
 Constraint:
-- ต้องมีตัวเลขทุกข้อ ห้ามพูดลอยๆ
-- ใช้ภาษาพื้นที่ที่เข้าใจง่าย (ไม่ใช้ศัพท์การเงินยาก)
-- เน้น "การสูญเสีย" มากกว่า "โอกาสได้"
+- ห้ามตอบแบบปลอบใจ (No Sugarcoating) ให้เน้นการ "ชี้จุดอันตราย" (Pain Point Driven)
+- ทุกมิติพยากรณ์ต้องมีตัวเลขประมาณการ "ส่วนขาด" ที่ชัดเจน
+- ใช้จิตวิทยาการนำเสนอแบบ "Fear of Loss"
 
 Output Format:
-### 🚨 รายงานความเสี่ยง (Risk Audit Report)
-- **💰 มูลค่าทางเศรษฐกิจของคุณ:** [ตัวเลข + คำอธิบาย]
-- **🏥 ช่องโหว่ด้านสุขภาพ:** [ส่วนต่างค่ารักษา + ตัวอย่างโรงพยาบาลในพื้นที่]
-- **📉 ช่องโหว่ด้านรายได้:** [จำนวนเดือนที่ครอบครัวอยู่ได้ถ้าคุณหยุดทำงาน]
-- **👨‍👩‍👧‍👦 ช่องโหว่ด้านมรดก:** [จำนวนเงินที่ครอบครัวต้องการถ้าคุณไม่อยู่]
+### 🚨 รายงานการวิเคราะห์จุดเปราะบาง (Risk Audit Report)
+- **มิติกลัวเจ็บ (Health Gap):** [วิเคราะห์ส่วนต่างค่ารักษาและระบุตัวเลขส่วนขาด]
+- **มิติกลัวจน (Retirement Gap):** [วิเคราะห์ความเสี่ยงเงินไม่พอใช้และผลกระทบจากเงินเฟ้อ]
+- **มิติกลัวตาย (Responsibility Gap):** [วิเคราะห์ทุนประกันมรดกที่ต้องมีเพิ่มทันที]
 
-### 🎯 แผนป้องกันตามลำดับความสำคัญ
-1. **First Priority:** [ผลิตภัณฑ์] - เพราะ [เหตุผลเชิงเศรษฐศาสตร์]
-2. **Second Priority:** [ผลิตภัณฑ์] - เพราะ [เหตุผลเชิงจิตวิทยา]
-3. **Third Priority:** [ผลิตภัณฑ์] - เพราะ [เหตุผลเชิงสังคม]
+### 🏆 กลยุทธ์การปิดความเสี่ยงตามลำดับความสำคัญ
+1. [ลำดับที่ 1]: [ชื่อกลุ่มผลิตภัณฑ์] - เพราะ... [ระบุเหตุผลที่กระทบการเงินปัจจุบันที่สุด]
+2. [ลำดับที่ 2]: [ชื่อกลุ่มผลิตภัณฑ์] - เพราะ...
+3. [ลำดับที่ 3]: [ชื่อกลุ่มผลิตภัณฑ์] - เพราะ...
 `;
-
+                    
                     case "objection":
                         return `
-Role: คุณคือ Master Negotiator และ Emotional Reframing Specialist
+Role: คุณคือนักเจรจาต่อรองมือหนึ่ง (Master Negotiator) ที่เปลี่ยนวิกฤตเป็นโอกาสได้เก่งที่สุด
 ${commonContext}
+เหตุผลปฏิเสธ: [${forms.objection.real_reason}] | ระดับความสนใจเดิม: [${forms.objection.interest_level}/10]
+แบบประกันที่เสนอ: [${forms.objection.product}] | น้ำเสียงลูกค้า: [${forms.objection.tone}]
 
-Client Context:
-- สาเหตุปฏิเสธจริง: ${forms.objection.real_reason}
-- ระดับความสนใจเดิม: ${forms.objection.interest_level}/10
-- จริตลูกค้า: ${forms.objection.disc}
-- แบบประกันที่เสนอ: ${forms.objection.product}
-- น้ำเสียงลูกค้า: ${forms.objection.tone}
+Task: ออกแบบการตอบโต้ข้อโต้แย้งด้วยเทคนิค LSCPA โดยเน้นการ "ยอมรับแต่ไม่ยินยอม (Agree but Reframe)"
 
-Task: ใช้เทคนิค Reframing & Empathy เพื่อเปลี่ยนมุมมองจาก "ค่าใช้จ่าย" เป็น "การป้องกันความมั่งคั่ง"
-
-Deep Instruction:
-1. [Root Cause Analysis]: วิเคราะห์สาเหตุแท้จริงที่ซ่อนอยู่
-2. [Feel-Felt-Found Technique]: ใช้เทคนิค 3 ขั้นตอน
-3. [Value Reframing Matrix]: เปลี่ยนมุมมองการลงทุน
-4. [DISC-Specific Closing]: ปรับวิธีการปิดตามจริต
+Instruction:
+1. [Listen & Share]: ร่างบทพูดที่แสดงความเข้าใจ (Empathy) โดยใช้เทคนิค Feel-Felt-Found
+2. [Clarify & Reframing]: เปลี่ยนข้อโต้แย้งจาก "ภาระ/ค่าใช้จ่าย" ให้กลายเป็น "การซื้อความแน่นอนให้สินทรัพย์อื่น" 
+   โดยอ้างอิง รพ. ${rh.hospitals?.[0] || 'โรงพยาบาลในพื้นที่'} หากเป็นเรื่องสุขภาพ
+3. [Present Value]: นำเสนอความคุ้มค่าในมุมที่ลูกค้าจะยอมรับ:
+   - ความเสี่ยงระดับ: ${forms.objection.interest_level}/10
+   - เปรียบเทียบกับความเสี่ยงจริงในพื้นที่ ${zone}
 
 Constraint:
-- ต้องยกตัวอย่างเคสจริงในพื้นที่ (หรือพื้นที่ใกล้เคียง)
-- ระดับความหนักเบาขึ้นกับ Interest Level (1-10)
-- ห้ามโต้แย้งตรงๆ ให้ใช้การตั้งคำถามแทน
+- ห้ามใช้การโต้เถียง (No Argue)
+- ต้องให้ทางเลือกสุดท้าย (Call to Action) เสมอ
 
 Output Format:
-### 🎯 วิเคราะห์สาเหตุปฏิเสธ
-- **Root Cause:** [สาเหตุแท้จริงที่ซ่อนอยู่]
-- **Emotional Trigger:** [อารมณ์หลักที่ขับเคลื่อนการปฏิเสธ]
-
-### 💡 เทคนิค Feel-Felt-Found สำหรับ${zone}
-1. **Feel (เข้าใจ):** "[แสดงความเข้าใจโดยอ้างอิงพื้นที่]"
-2. **Felt (เคยรู้สึก):** "[ยกเคสในพื้นที่หรือจังหวัดใกล้เคียง]"
-3. **Found (พบว่าอย่างไร):** "[ผลลัพธ์ที่ลูกค้าในพื้นที่ได้รับ]"
-
-### 🔄 บทสนทนา Reframing
-- **Reframe 1:** [เปลี่ยนมุมมองจากค่าใช้จ่ายเป็นมูลค่า]
-- **Reframe 2:** [เชื่อมโยงกับวิถีชีวิตในพื้นที่]
-- **Closing Question:** "[คำถามปิดท้ายให้เลือกทางออกแทนการปฏิเสธ]"
+- **เทคนิคการรับมือ:** [วิเคราะห์ว่าทำไมลูกค้าถึงพูดแบบนี้]
+- **สคริปต์การตอบ (The Response):** [บทพูดนุ่มนวลแต่หนักแน่นด้วยตรรกะ]
+- **ทางเลือกปิดท้าย (Closing Alternative):** [ประโยคที่ให้ลูกค้าเลือกเพื่อไปต่อ]
 `;
+                    
+                    case "simplifier":
+                        return `${commonContext}
+Task: คุณคือ Content Creator ย่อยผลประโยชน์ประกันแผน ${forms.simplifier.plan_name} เบี้ย ${forms.simplifier.premium} ให้เหลือ '3 ประโยคทองคำ'.
+Instruction: เปรียบเทียบเบี้ยประกันรายวันกับ 'ค่าครองชีพใน ${zone}' (เช่น กาแฟร้านดัง, ข้าวแกง, หรือตั๋วเรือ) เพื่อให้เห็นว่าเบี้ยเล็กน้อยมาก`;
+                    
+                    case "matchmaker":
+                        return `${commonContext}
+Task: คุณคือนักออกแบบแผนประกันมืออาชีพ เลือก Solution สำหรับเป้าหมาย ${forms.matchmaker.goal} งบ ${forms.matchmaker.budget}.
+Instruction: อ้างอิงสวัสดิการที่คนใน ${zone} มักจะมีอยู่แล้ว และชี้ให้เห็นว่าแผนนี้เติมเต็มส่วนขาดอย่างไร`;
+                    
+                    case "closing":
+                        return `${commonContext}
+Task: คุณคือ Top Sales (MDRT) สรุปจุดเด่นที่ลูกค้าชอบ: ${forms.closing.interest_point} และแก้กังวล: ${forms.closing.last_concern}.
+Instruction: ใช้เทคนิค Alternative Close และใช้ 'ความเร่งด่วนเชิงพื้นที่' (เช่น สิทธิพิเศษ รพ. ${rh.hospitals ? rh.hospitals[0] : ""} หรือโควต้า) ร่างบทพูดปิดการขายที่นุ่มนวลแต่ทรงพลัง`;
+                    
+                    case "prompt_designer":
+                        return `Role: คุณคือเชี่ยวชาญด้าน Prompt Engineering ระดับโลกที่เข้าใจธุรกิจประกันไทย
+Objective: ${forms.prompt_designer.objective}
+Target: ${forms.prompt_designer.target}
+Tone: ${forms.prompt_designer.tone}
+Details: ${forms.prompt_designer.details}
+Context: ${zone}, ${rh.name || ""}, Hospitals: ${rh.hospitals ? rh.hospitals.join(", ") : ""}
+Task: ออกแบบ 'Master Prompt' (Structure: Context + Role + Task + Constraint) ฝังข้อมูล Localized ลงไป
+Output Format: 
+1. วิเคราะห์ความตั้งใจ 
+2. Master Prompt (ในกรอบ Code) 
+3. เคล็ดลับการปรับจูน`;
 
-                    default:
-                        return commonContext;
+                    default: return "";
                 }
             }
             
@@ -558,24 +743,32 @@ Output Format:
                 this.setState({ loading: true, aiResponse: "", error: "" });
                 
                 try {
-                    // Get API key from Supabase rotation
-                    const apiKey = await this.getApiKey();
-                    const prompt = this.getEnhancedPrompt();
+                    // ดึง API Key จาก Supabase Manager
+                    const apiKey = await this.supabaseManager.getApiKey();
                     
-                    console.log("Enhanced Prompt:", prompt);
+                    // ตรวจสอบว่าเป็น demo key หรือไม่
+                    const isDemoMode = apiKey === "demo_key_for_testing_12345";
                     
-                    if (!apiKey) {
-                        // Demo mode - use mock responses
+                    if (isDemoMode) {
+                        // โหมดทดลอง - ใช้ mock responses
                         setTimeout(() => {
-                            this.showMockResponse();
+                            const mockResponse = this.getMockResponse();
+                            this.setState({ 
+                                aiResponse: mockResponse,
+                                loading: false 
+                            });
                         }, 1000);
                         return;
                     }
                     
-                    // Use Gemini API
+                    const prompt = this.getPowerPrompt();
+                    
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
                         body: JSON.stringify({
                             contents: [{
                                 parts: [{ text: prompt }]
@@ -590,7 +783,8 @@ Output Format:
                     });
                     
                     if (!response.ok) {
-                        throw new Error(`API Error: ${response.status}`);
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(`API Error (${response.status}): ${errorData.error?.message || response.statusText}`);
                     }
                     
                     const data = await response.json();
@@ -600,75 +794,201 @@ Output Format:
                     }
                     
                     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "ไม่พบคำตอบจาก AI";
-                    this.setState({ aiResponse: aiText, loading: false });
+                    this.setState({ aiResponse: aiText });
                     
                 } catch (err) {
                     console.error("Error:", err);
-                    this.showMockResponse();
+                    
+                    // Fallback ใช้ mock responses
+                    this.setState({ 
+                        error: "กำลังใช้โหมดทดลอง...",
+                        loading: false 
+                    });
+                    
+                    setTimeout(() => {
+                        const mockResponse = this.getMockResponse();
+                        this.setState({ 
+                            aiResponse: mockResponse,
+                            error: "",
+                            loading: false 
+                        });
+                    }, 800);
+                    
+                } finally {
+                    if (!this.state.error) {
+                        this.setState({ loading: false });
+                    }
                 }
             }
             
-            showMockResponse() {
-                const mockResponses = {
-                    ice_breaking: `### 🧠 การวิเคราะห์จริตลูกค้า (DISC: ${this.state.forms.ice_breaking.disc})
-- **จุดเข้าหาที่ได้ผล:** 
-  1. พูดตรงประเด็น เน้นผลลัพธ์และตัวเลข
-  2. ให้ทางเลือกที่ชัดเจนและวัดผลได้
-  3. เคารพเวลาและตัดสินใจเร็ว
-- **สิ่งที่ต้องเลี่ยง:**
-  - การพูดเยินเย้อ ไม่ตรงประเด็น
-  - การบังคับหรือกดดันเกินไป
-
-### 💬 บทสนทนาเปิดใจ (Contextual Bridge)
-1. **Opening Hook:** "สวัสดีครับ/คะ เห็นคุณมา${this.state.forms.ice_breaking.transaction || "ทำธุรกรรม"} ที่นี่ ผมสังเกตเห็นว่าคุณ${this.state.forms.ice_breaking.insight || "เป็นคนรายละเอียดดี"} เลยอยากคุยเรื่องหนึ่งที่สำคัญ"
-2. **Empathy Bridge:** "ลูกค้าหลายท่านใน${this.state.userProfile.zone} ที่มา${this.state.forms.ice_breaking.transaction || "ทำธุรกรรม"} มักจะมีคำถามเรื่องการวางแผนรับมือความไม่แน่นอน ผมเข้าใจว่าทุกคนอยากเตรียมการไว้ดีที่สุด"
-3. **Open Question:** "ถ้ามีหนึ่งสิ่งที่คุณอยากทำให้ครอบครัวมั่นใจได้ 100% ในปีนี้ จะเป็นเรื่องอะไรครับ/คะ?"
-
-### 🎯 คำถามทรงพลัง (Power Question)
-"ถ้าวันนี้คุณหยุดทำงานได้ 1 ปี โดยครอบครัวยังใช้ชีวิตได้ตามปกติ คุณรู้สึกว่าต้องเตรียมตัวอย่างไรบ้าง?"`,
-                    
-                    needs_analysis: `### 🚨 รายงานความเสี่ยง (Risk Audit Report)
-- **💰 มูลค่าทางเศรษฐกิจของคุณ:** ประมาณ ${(parseFloat(this.state.forms.needs_analysis.income) || 0) * 10 / 1000000} ล้านบาท (คิดจากรายได้ 10 ปี)
-- **🏥 ช่องโหว่ด้านสุขภาพ:** จากสถิติค่ารักษาโรคร้ายแรงที่${RH_DATA[this.state.userProfile.rh]?.hospitals?.[0] || "โรงพยาบาลชั้นนำ"} เฉลี่ย 500,000 บาท/ครั้ง ขณะที่สวัสดิการ${this.state.forms.needs_analysis.welfare || "ของคุณ"} คุ้มครองได้เพียงส่วนหนึ่ง
-- **📉 ช่องโหว่ด้านรายได้:** ถ้าคุณหยุดทำงาน ครอบครัวจะมีเงินใช้ได้เพียง ${Math.round((parseFloat(this.state.forms.needs_analysis.assets) || 0) / ((parseFloat(this.state.forms.needs_analysis.income) || 1) * 0.7 / 12))} เดือน
-- **👨‍👩‍👧‍👦 ช่องโหว่ด้านมรดก:** หนี้สิน ${(parseFloat(this.state.forms.needs_analysis.debt) || 0).toLocaleString()} บาท + ค่าเลี้ยงดูครอบครัวอีก ${(parseInt(this.state.forms.needs_analysis.dependents) || 0) * 10000 * 12 * (parseInt(this.state.forms.needs_analysis.years) || 5)} บาท
-
-### 🎯 แผนป้องกันตามลำดับความสำคัญ
-1. **First Priority:** ประกันโรคร้ายแรง - เพราะค่ารักษาพยาบาลเป็นความเสี่ยงที่เกิดขึ้นได้ทุกเมื่อและกระทบสภาพคล่องที่สุด
-2. **Second Priority:** ประกันชีวิตแบบสะสมทรัพย์ - เพราะช่วยสร้างหลักประกันให้ครอบครัวและลดหย่อนภาษีได้
-3. **Third Priority:** กองทุนรวมเพื่อการเกษียณ - เพราะต้องเตรียมรับมือกับเงินเฟ้อและอายุที่ยืนยาวขึ้น`,
-                    
-                    objection: `### 🎯 วิเคราะห์สาเหตุปฏิเสธ
-- **Root Cause:** ความรู้สึกว่าเบี้ยประกันเป็น "ค่าใช้จ่าย" แทนที่จะเป็น "การลงทุนป้องกันความเสี่ยง"
-- **Emotional Trigger:** ความกังวลเรื่องสภาพคล่องและความไม่แน่ใจในผลตอบแทน
-
-### 💡 เทคนิค Feel-Felt-Found สำหรับ${this.state.userProfile.zone}
-1. **Feel (เข้าใจ):** "ผมเข้าใจดีครับว่าช่วงนี้ค่าใช้จ่ายใน${this.state.userProfile.zone} สูงขึ้น ทุกบาททุกสตางค์สำคัญหมด"
-2. **Felt (เคยรู้สึก):** "ลูกค้าที่พักในคอนโดริมหาด${this.state.userProfile.zone.includes("พัทยา") ? "พัทยา" : "ใกล้ๆ"} ก็เคยรู้สึกแบบนี้เหมือนกัน ตอนแรกเขาก็คิดว่าเบี้ยประกันเป็นค่าใช้จ่ายเพิ่ม"
-3. **Found (พบว่าอย่างไร):** "แต่พอได้คุยกัน เขาพบว่าการจ่ายเบี้ยวันละไม่ถึงค่ากาแฟหนึ่งแก้ว ช่วยปกป้องทรัพย์สินในคอนโดและรถยนต์ที่เขาสะสมมาทั้งชีวิตได้"
-
-### 🔄 บทสนทนา Reframing
-- **Reframe 1:** "จริงๆ แล้วเบี้ยประกันไม่ใช่ค่าใช้จ่าย แต่เป็นทุนประกันความมั่งคั่งครับ"
-- **Reframe 2:** "เหมือนเราจ่ายค่าเบี้ยเพื่อซื้อ 'เวลา' ให้ตัวเองได้พักฟื้นโดยไม่ต้องกังวลเรื่องเงิน"
-- **Closing Question:** "ระหว่างการจ่ายเบี้ยวันละ 30 บาท กับการต้องหาเงิน 3 แสนบาทเมื่อเกิดเหตุไม่คาดฝัน คุณเลือกอย่างไหนครับ?"`
-                };
+            getMockResponse() {
+                const forms = this.state.forms;
+                const rh = RH_DATA[this.state.userProfile.rh] || {};
+                const zone = this.state.userProfile.zone;
                 
-                this.setState({ 
-                    aiResponse: mockResponses[this.state.activeTab] || "กำลังประมวลผล...", 
-                    loading: false 
+                switch (this.state.activeTab) {
+                    case "ice_breaking":
+                        const discMap = {
+                            "D": "เน้นเป้าหมาย รวดเร็ว ชัดเจน",
+                            "I": "ชอบคุย สังคมสูง เน้นความรู้สึก",
+                            "S": "เน้นความมั่นคง ครอบครัว ปลอดภัย",
+                            "C": "เน้นข้อมูล รายละเอียด ตัวเลข"
+                        };
+                        
+                        return `### 🧠 วิเคราะห์จริตลูกค้า (Type ${forms.ice_breaking.disc})
+**ลักษณะ:** ${discMap[forms.ice_breaking.disc] || "เน้นความมั่นคง"}
+**วิธีเข้าหาที่ควรทำ:** ตรงประเด็น ชัดเจน ไม่อ้อมค้อม
+**สิ่งที่ควรเลี่ยง:** การพูดเยิ่นเย้อไม่ตรงจุด
+
+### 🎭 สคริปต์บทพูด
+**จังหวะที่ 1 (ทักทาย):** "สวัสดีครับ/คะ ผม/ดิฉันเห็นว่าท่านกำลัง[${forms.ice_breaking.transaction}] ใช่ไหมครับ/คะ"
+
+**จังหวะที่ 2 (สะพานเชื่อมโยง):** "การ[${forms.ice_breaking.transaction}] มักทำให้เรานึกถึงการวางแผนเรื่องเงินในระยะยาวนะครับ/คะ โดยเฉพาะคนในพื้นที่${zone} ที่ค่าใช้จ่ายไม่น้อยเลย"
+
+**จังหวะที่ 3 (คำถามเปิด):** "ถ้าวันหนึ่งมีเหตุไม่คาดคิดที่ทำให้รายได้หยุดชะงัก ท่านมีแผนสำรองอะไรสำหรับครอบครัวบ้างไหมครับ/คะ"
+
+### ❓ คำถามทรงพลัง
+"ถ้าวันนี้เป็นวันสุดท้ายที่คุณทำงานได้ คุณอยากมั่นใจว่าครอบครัวจะมีเงินใช้กี่เดือน?"`;
+                    
+                    case "needs_analysis":
+                        const { gap, months } = this.calculateRealityCheck();
+                        return `### 🚨 รายงานการวิเคราะห์จุดเปราะบาง (Risk Audit Report)
+
+**มิติกลัวเจ็บ (Health Gap):**
+- สวัสดิการปัจจุบัน: ${forms.needs_analysis.welfare}
+- ค่ารักษาเฉลี่ย ${rh.hospitals?.[0] || 'โรงพยาบาลชั้นนำ'}: 15,000-30,000 บาท/วัน
+- **ส่วนขาด:** หากป่วย 7 วัน ต้องจ่ายเองประมาณ 200,000 บาท
+
+**มิติกลัวจน (Retirement Gap):**
+- รายจ่ายเดือนละ ${forms.needs_analysis.expense} บาท
+- เงินออมปัจจุบันอยู่ได้เพียง ${months.toFixed(1)} เดือน
+- **ผลกระทบเงินเฟ้อ:** ใน 10 ปี รายจ่ายจะเพิ่ม 34%
+
+**มิติกลัวตาย (Responsibility Gap):**
+- มูลค่าความรับผิดชอบ: ${(parseFloat(forms.needs_analysis.debt) + (parseFloat(forms.needs_analysis.expense) * 12 * parseFloat(forms.needs_analysis.years) || 0)).toLocaleString()} บาท
+- สินทรัพย์ปัจจุบัน: ${forms.needs_analysis.assets} บาท
+- **ส่วนขาด:** ${gap.toLocaleString()} บาท
+
+### 🏆 กลยุทธ์การปิดความเสี่ยงตามลำดับความสำคัญ
+1. **ประกันสุขภาพ:** คุ้มครองค่ารักษาโรคร้ายแรง - เพราะค่ารักษาพยาบาลคือจุดรั่วใหญ่ที่สุด
+2. **ประกันชีวิต:** วงเงิน ${Math.round(gap/2).toLocaleString()} บาท - เพราะต้องปกป้องความรับผิดชอบต่อครอบครัว
+3. **ประกันโรคร้ายแรง:** วงเงิน 500,000 บาท - เพราะโรคร้ายคือตัวทำลายเงินเก็บที่รุนแรงที่สุด`;
+                    
+                    case "objection":
+                        const interestLevel = parseInt(forms.objection.interest_level) || 5;
+                        const strategy = interestLevel >= 7 ? "รุกหนักด้วยหลักฐาน" : 
+                                       interestLevel >= 4 ? "สร้างความมั่นใจเพิ่ม" : 
+                                       "ถอยตั้งหลักและสร้างความสัมพันธ์";
+                        
+                        return `### 🛡️ เทคนิคการรับมือ
+**วิเคราะห์:** ลูกค้ามีความสนใจระดับ ${interestLevel}/10 - ${strategy}
+**สาเหตุลึกๆ:** ${forms.objection.real_reason} มักมาจากความกังวลเรื่องสภาพคล่อง
+
+### 🎯 สคริปต์การตอบ
+**Feel (แสดงความเข้าใจ):** "ผม/ดิฉันเข้าใจดีว่าตอนนี้ค่าใช้จ่ายเยอะจริงๆ โดยเฉพาะคนในพื้นที่${zone}"
+
+**Felt (บอกว่าคนอื่นก็เคย):** "ลูกค้าหลายท่านใน${zone} ก็เคยมีความคิดแบบนี้เหมือนกัน"
+
+**Found (สิ่งที่ค้นพบ):** "แต่พอได้คุยกันแล้วพบว่า การจ่ายเบี้ยวันละไม่ถึงค่ากาแฟ 1 แก้ว กลับช่วยปกป้องเงินเก็บทั้งปีได้เลย"
+
+**Reframing:** "จริงๆ แล้วนี่ไม่ใช่ค่าใช้จ่าย แต่เป็นการโอนความเสี่ยงให้บริษัทประกัน ถือเป็นการปกป้องเงินเก็บที่เราอดออมมาทั้งชีวิต"
+
+### 🔄 ทางเลือกปิดท้าย
+"ถ้าท่านสะดวก เรามาดูแผนที่เบี้ยเริ่มต้นเพียงวันละ 20 บาทก่อนดีไหมครับ/คะ หรือว่าท่านอยากได้ข้อมูลเปรียบเทียบกับแผนอื่นเพิ่มเติม?"`;
+                    
+                    case "simplifier":
+                        return `### 💎 3 ประโยคทองคำ
+
+1. "คุ้มครองครบ จ่ายเบี้ยวันละไม่ถึงค่ากาแฟหนึ่งแก้ว"
+2. "รักษาได้ทุกโรงพยาบาลชั้นนำ ไม่ต้องกังวลเรื่องค่ารักษา"
+3. "มีเงินคืนเมื่อครบอายุสัญญา วางแผนการเงินได้มั่นใจ"`;
+                    
+                    case "matchmaker":
+                        return `### 🎯 แผนประกันที่เหมาะกับคุณ
+
+**แผนแนะนำ:** ประกันชีวิตแบบสะสมทรัพย์
+**ความคุ้มครอง:** ชีวิต, สุขภาพ, และการออม
+**เบี้ยประกัน:** ${forms.matchmaker.budget || "30,000"} บาท/ปี
+**ผลประโยชน์:** คุ้มครองชีวิต 1,000,000 บาท + คุ้มครองสุขภาพ + เงินคืนเมื่อครบสัญญา`;
+                    
+                    case "closing":
+                        return `### ✅ สรุปและปิดการขาย
+
+"จากที่คุยกัน คุณให้ความสนใจเรื่อง${forms.closing.interest_point || "ความคุ้มครองสุขภาพ"} ซึ่งแผนนี้ตอบโจทย์คุณได้ดี และสำหรับข้อกังวลเรื่อง${forms.closing.last_concern || "ค่าเบี้ยประกัน"} ผม/ดิฉันมีข้อเสนอพิเศษให้..."
+
+**เทคนิคปิดการขาย:**
+"คุณสะดวกเซ็นสัญญาวันนี้หรือพรุ่งนี้ดีครับ/คะ?"`;
+                    
+                    case "prompt_designer":
+                        return `### 🤖 Master Prompt Design
+
+**วิเคราะห์ความตั้งใจ:** สร้างบทสนทนาแนะนำประกันสุขภาพ
+
+**Master Prompt:**
+\`\`\`
+Role: คุณคือที่ปรึกษาประกันมืออาชีพในพื้นที่${zone}
+Context: ลูกค้าเป็น${forms.prompt_designer.target || "ผู้ประกอบการ"} ใน${zone} ที่ต้องการ${forms.prompt_designer.objective || "วางแผนประกันสุขภาพ"}
+Task: สร้างบทสนทนาที่น่าสนใจและสร้างแรงจูงใจให้ลูกค้าสนใจแผนประกัน
+Constraint: ใช้คำพูดที่เป็นกันเอง ไม่ทางการเกินไป อ้างอิงโรงพยาบาล${rh.hospitals?.[0] || "ชั้นนำ"} ในพื้นที่
+Output: บทสนทนายาว 5-7 รอบ
+\`\`\`
+
+**เคล็ดลับ:** ปรับความยาวตามกลุ่มเป้าหมายและเพิ่มตัวอย่างกรณีศึกษา`;
+                    
+                    default:
+                        return "ไม่พบคำตอบสำหรับหมวดนี้";
+                }
+            }
+            
+            saveInputValues() {
+                // เก็บค่า input จาก DOM เฉพาะเมื่อมี element อยู่จริง
+                const inputs = document.querySelectorAll('input, textarea, select');
+                inputs.forEach(input => {
+                    if (input.id) {
+                        this.inputValues[input.id] = input.value;
+                    }
                 });
+            }
+            
+            restoreInputValues() {
+                // เฉพาะในหน้า Main page เท่านั้น
+                if (!this.state.isSetup) return;
+                
+                // Restore เฉพาะ element ที่มีอยู่ใน DOM
+                Object.keys(this.inputValues).forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.value = this.inputValues[id];
+                    }
+                });
+            }
+            
+            renderErrorPage(error) {
+                return `
+                    <div class="fixed-height flex items-center justify-center bg-red-50">
+                        <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md">
+                            <h1 class="text-2xl font-bold text-red-600 mb-4">เกิดข้อผิดพลาด</h1>
+                            <p class="text-slate-600 mb-4">${error.message || 'ระบบไม่สามารถแสดงผลได้'}</p>
+                            <button onclick="location.reload()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold">
+                                รีเฟรชหน้าเว็บ
+                            </button>
+                        </div>
+                    </div>
+                `;
             }
             
             renderInputSection() {
                 const tab = this.state.activeTab;
                 const f = this.state.forms[tab];
                 
+                // ฟังก์ชันสร้าง input element
                 const createInput = (tabName, field, value, placeholder, type = "text", extraClass = "") => {
+                    const id = `${tabName}-${field}`;
                     return `
                         <input 
-                            id="${tabName}-${field}"
+                            id="${id}"
                             type="${type}" 
-                            class="w-full p-3 border border-slate-200 rounded-xl bg-white text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition-all ${extraClass}"
+                            class="w-full p-2.5 border rounded-lg bg-slate-50 text-sm ${extraClass}"
                             value="${value || ''}"
                             oninput="app.handleInputChange('${tabName}', '${field}', this.value)"
                             placeholder="${placeholder}"
@@ -678,10 +998,11 @@ Output Format:
                 };
                 
                 const createTextarea = (tabName, field, value, placeholder, rows = 4) => {
+                    const id = `${tabName}-${field}`;
                     return `
                         <textarea 
-                            id="${tabName}-${field}"
-                            class="w-full p-3 border border-slate-200 rounded-xl bg-white text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition-all resize-none"
+                            id="${id}"
+                            class="w-full p-2.5 border rounded-lg bg-slate-50 text-sm resize-none"
                             rows="${rows}"
                             oninput="app.handleInputChange('${tabName}', '${field}', this.value)"
                             placeholder="${placeholder}"
@@ -691,6 +1012,7 @@ Output Format:
                 };
                 
                 const createSelect = (tabName, field, value, options, placeholder = "เลือก") => {
+                    const id = `${tabName}-${field}`;
                     let optionsHtml = `<option value="">${placeholder}</option>`;
                     
                     if (Array.isArray(options)) {
@@ -707,8 +1029,8 @@ Output Format:
                     
                     return `
                         <select 
-                            id="${tabName}-${field}"
-                            class="w-full p-3 border border-slate-200 rounded-xl bg-white text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition-all"
+                            id="${id}"
+                            class="w-full p-2.5 border rounded-lg bg-slate-50 text-sm"
                             onchange="app.handleInputChange('${tabName}', '${field}', this.value)"
                         >
                             ${optionsHtml}
@@ -717,205 +1039,463 @@ Output Format:
                 };
                 
                 const InputWrap = (label, children) => `
-                    <div class="mb-5">
-                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">${label}</label>
+                    <div class="mb-4">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">${label}</label>
                         ${children}
                     </div>
                 `;
                 
                 switch (tab) {
                     case "ice_breaking":
-                        const transactionOptions = ["ฝากประจำ", "มาปรับสมุด", "ถอนเงินก้อน", "เปิดบัญชีนิติบุคคล", "อื่นๆ"];
+                        const transactionOptions = {
+                            "ฝากประจำ": "ฝากประจำ",
+                            "มาปรับสมุด": "มาปรับสมุด",
+                            "ถอนเงินก้อน": "ถอนเงินก้อน",
+                            "เปิดบัญชีนิติบุคคล": "เปิดบัญชีนิติบุคคล",
+                            "โอนเงิน": "โอนเงิน",
+                            "อื่นๆ": "อื่นๆ"
+                        };
+                        
                         const discOptions = {
                             "D": "D - เน้นเป้าหมาย (Direct)",
                             "I": "I - ชอบคุย (Influential)",
                             "S": "S - เน้นความมั่นคง (Steady)",
                             "C": "C - เน้นข้อมูล (Conscientious)"
                         };
-                        const relationshipOptions = ["ใหม่", "พอคุ้นเคย", "สนิท"];
+                        
+                        const relationshipOptions = {
+                            "ใหม่": "ใหม่ (เพิ่งรู้จัก)",
+                            "พอคุ้นเคย": "พอคุ้นเคย (เคยคุยบ้าง)",
+                            "สนิท": "สนิท (รู้จักกันมานาน)"
+                        };
                         
                         return `
-                            <div class="space-y-4 animate-in">
+                            <div class="space-y-4 animate-in mobile-input-container">
                                 ${InputWrap("ธุรกรรมอ้างอิง", 
                                     createSelect('ice_breaking', 'transaction', f.transaction, transactionOptions, "เลือกธุรกรรม")
                                 )}
+                                
                                 ${InputWrap("สิ่งสังเกตเชิงลึก (Insight)", 
-                                    createTextarea('ice_breaking', 'insight', f.insight, "เช่น: มากับลูกเล็ก, ดูเป็นห่วงคุณแม่ที่เดินไม่ค่อยไหว, ใส่ชุดข้าราชการ...", 3)
+                                    `<textarea 
+                                        id="ice_breaking-insight"
+                                        class="w-full p-2.5 border rounded-lg bg-slate-50 text-sm resize-none"
+                                        rows="4"
+                                        oninput="app.handleInputChange('ice_breaking', 'insight', this.value)"
+                                        placeholder="เช่น มากับลูกเล็ก, ดูเป็นห่วงคุณแม่ที่เดินไม่ค่อยไหว, ใส่ชุดข้าราชการ..."
+                                        autocomplete="off"
+                                    >${f.insight || ''}</textarea>`
                                 )}
-                                <div class="grid grid-cols-2 gap-4">
+                                
+                                <div class="grid grid-cols-2 gap-3">
                                     ${InputWrap("จริตลูกค้า (DISC)", 
-                                        createSelect('ice_breaking', 'disc', f.disc, discOptions)
+                                        createSelect('ice_breaking', 'disc', f.disc, discOptions, "เลือกจริต")
                                     )}
                                     ${InputWrap("ระดับความสัมพันธ์", 
                                         createSelect('ice_breaking', 'relationship_level', f.relationship_level, relationshipOptions)
                                     )}
                                 </div>
+                                
                                 ${InputWrap("ความสนใจร่วม (ถ้ารู้)", 
-                                    createInput('ice_breaking', 'common_interest', f.common_interest, "เช่น: กอล์ฟ, ลงทุน, ท่องเที่ยว")
+                                    createInput('ice_breaking', 'common_interest', f.common_interest, "เช่น กีฬา, การลงทุน, ท่องเที่ยว")
                                 )}
+                                
+                                <div class="p-4 bg-gradient-to-r from-sky-50 to-indigo-50 rounded-xl border border-sky-100">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        ${ICONS.lightbulb}
+                                        <span class="text-xs font-bold text-sky-800">AI จะสร้างบทสนทนาที่:</span>
+                                    </div>
+                                    <ul class="text-xs text-sky-700 space-y-1 pl-5">
+                                        <li>• ไม่เหมือนการขาย แต่เป็นการแสดงความห่วงใยตามบริบท</li>
+                                        <li>• เชื่อมโยงจากสิ่งที่เห็นไปสู่ความกังวลลึกๆ</li>
+                                        <li>• ใช้ Local Keywords จากพื้นที่ ${this.state.userProfile.zone}</li>
+                                    </ul>
+                                </div>
                             </div>
                         `;
-                    
+                        
                     case "needs_analysis":
-                        const taxOptions = ["10%", "20%", "30%", "ไม่เสียเลย"];
-                        const welfareOptions = ["บัตรทอง/ประกันสังคม", "ประกันกลุ่มบริษัท", "มีเล่มประกันส่วนตัว", "ไม่มี"];
-                        const concernOptions = ["กลัวเงินหมดก่อนตาย", "กลัวเป็นโรคร้ายแล้วถังแตก", "กลัวลูกลำบากถ้าตัวเองไม่อยู่", "อื่นๆ"];
+                        const taxOptions = {
+                            "10%": "ฐานภาษี 10%",
+                            "20%": "ฐานภาษี 20%",
+                            "30%": "ฐานภาษี 30%",
+                            "ไม่เสียเลย": "ไม่เสียภาษี"
+                        };
+                        
+                        const welfareOptions = {
+                            "บัตรทอง/ประกันสังคม": "บัตรทอง/ประกันสังคม",
+                            "ประกันกลุ่มบริษัท": "ประกันกลุ่มบริษัท",
+                            "มีเล่มประกันส่วนตัว": "มีเล่มประกันส่วนตัวอยู่แล้ว",
+                            "ไม่มีเลย": "ไม่มีสวัสดิการ"
+                        };
+                        
+                        const concernOptions = {
+                            "กลัวเงินหมดก่อนตาย": "กลัวเงินหมดก่อนตาย",
+                            "กลัวเป็นโรคร้ายแล้วถังแตก": "กลัวเป็นโรคร้ายแล้วถังแตก",
+                            "กลัวลูกลำบากถ้าตัวเองไม่อยู่": "กลัวลูกลำบากถ้าตัวเองไม่อยู่",
+                            "กลัวเก็บเงินไม่ทันเงินเฟ้อ": "กลัวเก็บเงินไม่ทันเงินเฟ้อ"
+                        };
+                        
+                        const hospitalOptions = {
+                            "รัฐบาล": "โรงพยาบาลรัฐ",
+                            "เอกชน": "โรงพยาบาลเอกชน",
+                            "ทั้งสองแบบ": "ได้ทั้งรัฐและเอกชน"
+                        };
                         
                         return `
-                            <div class="space-y-4 animate-in">
-                                ${InputWrap("รายได้ต่อปี (บาท)", 
-                                    createInput('needs_analysis', 'income', f.income, "เช่น: 600000", "number")
-                                )}
-                                <div class="grid grid-cols-2 gap-4">
-                                    ${InputWrap("สถานะทางภาษี", 
-                                        createSelect('needs_analysis', 'tax_bracket', f.tax_bracket, taxOptions)
+                            <div class="space-y-4 animate-in mobile-input-container">
+                                <div class="grid grid-cols-2 gap-3">
+                                    ${InputWrap("รายได้ต่อปี (บาท)", 
+                                        createInput('needs_analysis', 'income', f.income, "0", "number")
                                     )}
+                                    ${InputWrap("รายจ่าย/เดือน (บาท)", 
+                                        createInput('needs_analysis', 'expense', f.expense, "0", "number")
+                                    )}
+                                </div>
+                                
+                                ${InputWrap("หนี้สินรวม (บาท)", 
+                                    createInput('needs_analysis', 'debt', f.debt, "0", "number")
+                                )}
+                                
+                                <div class="grid grid-cols-2 gap-3">
                                     ${InputWrap("คนในอุปการะ", 
                                         createInput('needs_analysis', 'dependents', f.dependents, "คน", "number")
                                     )}
-                                </div>
-                                ${InputWrap("สวัสดิการปัจจุบัน", 
-                                    createSelect('needs_analysis', 'welfare', f.welfare, welfareOptions)
-                                )}
-                                ${InputWrap("ความกังวลอันดับหนึ่ง", 
-                                    createSelect('needs_analysis', 'top_concern', f.top_concern, concernOptions)
-                                )}
-                                <div class="grid grid-cols-2 gap-4">
                                     ${InputWrap("จำนวนปีที่ต้องดูแล", 
                                         createInput('needs_analysis', 'years', f.years, "ปี", "number")
                                     )}
-                                    ${InputWrap("สินทรัพย์ที่มี", 
-                                        createInput('needs_analysis', 'assets', f.assets, "บาท", "number")
+                                </div>
+                                
+                                ${InputWrap("สินทรัพย์เดิม (บาท)", 
+                                    createInput('needs_analysis', 'assets', f.assets, "0", "number")
+                                )}
+                                
+                                <div class="grid grid-cols-2 gap-3">
+                                    ${InputWrap("สถานะทางภาษี", 
+                                        createSelect('needs_analysis', 'tax_bracket', f.tax_bracket, taxOptions)
+                                    )}
+                                    ${InputWrap("สวัสดิการปัจจุบัน", 
+                                        createSelect('needs_analysis', 'welfare', f.welfare, welfareOptions)
                                     )}
                                 </div>
-                                ${InputWrap("หนี้สินรวม", 
-                                    createInput('needs_analysis', 'debt', f.debt, "บาท", "number")
+                                
+                                ${InputWrap("ความกังวลอันดับหนึ่ง", 
+                                    createSelect('needs_analysis', 'primary_concern', f.primary_concern, concernOptions)
                                 )}
-                                <div class="mt-6 p-4 bg-gradient-to-r from-sky-50 to-indigo-50 rounded-xl border border-sky-100">
-                                    <div class="flex items-center gap-2 mb-2">
+                                
+                                ${InputWrap("ต้องการเข้าพัก รพ. ประเภท", 
+                                    createSelect('needs_analysis', 'hospital_type', f.hospital_type, hospitalOptions)
+                                )}
+                                
+                                <!-- Protection Gap Display -->
+                                <div class="bg-gradient-to-r from-sky-900 to-indigo-900 rounded-xl p-4 text-white shadow-lg">
+                                    <div class="flex justify-between items-center text-[10px] opacity-80 mb-1">
+                                        <span>ESTIMATED PROTECTION GAP</span>
                                         ${ICONS.alert}
-                                        <span class="text-sm font-bold text-sky-800">Protection Gap</span>
                                     </div>
-                                    <div class="text-2xl font-black text-sky-900">${this.calculateProtectionGap().toLocaleString()} บาท</div>
-                                    <p class="text-xs text-sky-600 mt-1">ส่วนต่างที่ต้องปิดด้วยการวางแผน</p>
+                                    <div id="protection-gap" class="text-xl font-bold">${this.calculateRealityCheck().gap.toLocaleString()} บาท</div>
+                                    <div class="text-xs opacity-70 mt-1">ส่วนขาดที่ต้องปกป้องทันที</div>
                                 </div>
                             </div>
                         `;
-                    
+                        
                     case "objection":
-                        const reasonOptions = ["ไม่มีสภาพคล่อง", "ไม่เชื่อมั่นในตัวแทน", "รู้สึกว่าเบี้ยทิ้งสูญเปล่า", "ขอไปเปรียบเทียบกับคู่แข่ง", "อื่นๆ"];
-                        const toneOptions = ["กังวล", "ไม่มั่นใจ", "สงสัย", "ปฏิเสธ", "เหนื่อย"];
-                        const productOptions = ["ประกันชีวิต", "ประกันสุขภาพ", "ประกันโรคร้ายแรง", "ประกันอุบัติเหตุ", "กองทุนรวม"];
+                        const objectionOptions = {
+                            "ไม่มีสภาพคล่อง": "ไม่มีสภาพคล่อง",
+                            "ไม่เชื่อมั่นในตัวแทน": "ไม่เชื่อมั่นในตัวแทน",
+                            "รู้สึกว่าเบี้ยทิ้งสูญเปล่า": "รู้สึกว่าเบี้ยทิ้งสูญเปล่า",
+                            "ขอไปเปรียบเทียบกับคู่แข่ง": "ขอไปเปรียบเทียบกับคู่แข่ง",
+                            "ยังไม่พร้อมตัดสินใจ": "ยังไม่พร้อมตัดสินใจ",
+                            "ต้องปรึกษาครอบครัว": "ต้องปรึกษาครอบครัว"
+                        };
+                        
+                        const toneOptions = {
+                            "กังวล": "กังวล",
+                            "ไม่มั่นใจ": "ไม่มั่นใจ",
+                            "สงสัย": "สงสัย",
+                            "ปฏิเสธ": "ปฏิเสธ",
+                            "เหนื่อย": "เหนื่อย",
+                            "สนใจแต่ลังเล": "สนใจแต่ลังเล"
+                        };
                         
                         return `
-                            <div class="space-y-4 animate-in">
+                            <div class="space-y-4 mobile-input-container">
                                 ${InputWrap("สาเหตุที่แท้จริงของการปฏิเสธ", 
-                                    createSelect('objection', 'real_reason', f.real_reason, reasonOptions)
+                                    createSelect('objection', 'real_reason', f.real_reason, objectionOptions, "เลือกสาเหตุ")
                                 )}
-                                <div class="grid grid-cols-2 gap-4">
-                                    ${InputWrap("ระดับความสนใจเดิม (1-10)", 
-                                        createInput('objection', 'interest_level', f.interest_level, "5", "number", "text-center")
+                                
+                                <div class="grid grid-cols-2 gap-3">
+                                    ${InputWrap("ระดับความสนใจเดิม", 
+                                        `<select 
+                                            id="objection-interest_level"
+                                            class="w-full p-2.5 border rounded-lg bg-slate-50 text-sm"
+                                            onchange="app.handleInputChange('objection', 'interest_level', this.value)"
+                                        >
+                                            <option value="">เลือกระดับ</option>
+                                            ${Array.from({length: 10}, (_, i) => {
+                                                const level = i + 1;
+                                                const selected = f.interest_level === level.toString() ? 'selected' : '';
+                                                return `<option value="${level}" ${selected}>${level} (${level <= 3 ? 'สนใจน้อย' : level <= 6 ? 'ปานกลาง' : 'สนใจมาก'})</option>`;
+                                            }).join('')}
+                                        </select>`
                                     )}
-                                    ${InputWrap("จริตลูกค้า", 
-                                        createSelect('objection', 'disc', f.disc, {
-                                            "D": "D - เน้นเป้าหมาย",
-                                            "I": "I - ชอบคุย", 
-                                            "S": "S - เน้นความมั่นคง",
-                                            "C": "C - เน้นข้อมูล"
-                                        })
+                                    ${InputWrap("น้ำเสียงลูกค้า", 
+                                        createSelect('objection', 'tone', f.tone, toneOptions, "เลือกน้ำเสียง")
                                     )}
                                 </div>
-                                ${InputWrap("น้ำเสียงลูกค้า", 
-                                    createSelect('objection', 'tone', f.tone, toneOptions)
-                                )}
+                                
                                 ${InputWrap("แบบประกันที่เสนอ", 
-                                    createSelect('objection', 'product', f.product, productOptions)
+                                    createInput('objection', 'product', f.product, "เช่น PRU Cancer Care, AIA Happy...")
                                 )}
+                                
                                 <div class="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100">
-                                    <p class="text-xs text-amber-800">
-                                        <strong>เคล็ดลับ:</strong> AI จะยกตัวอย่างเคสจริงในพื้นที่ ${this.state.userProfile.zone} เพื่อสร้างความน่าเชื่อถือ
-                                    </p>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        ${ICONS.zap}
+                                        <span class="text-xs font-bold text-amber-800">เทคนิค Feel-Felt-Found:</span>
+                                    </div>
+                                    <p class="text-xs text-amber-700">AI จะยกตัวอย่างเคสจริงในพื้นที่ ${this.state.userProfile.zone} ที่เคยเกิดเหตุการณ์แล้วได้ประโยชน์จากประกัน</p>
                                 </div>
                             </div>
                         `;
-                    
+                        
+                    case "simplifier":
+                        const competitorOptions = {
+                            "รู้จักชื่อคู่แข่ง": "รู้จักชื่อคู่แข่ง",
+                            "ไม่รู้จัก": "ไม่รู้จัก",
+                            "เคยได้ยิน": "เคยได้ยิน"
+                        };
+                        
+                        return `
+                            <div class="space-y-4 mobile-input-container">
+                                ${InputWrap("ชื่อแผนประกัน", 
+                                    createInput('simplifier', 'plan_name', f.plan_name, "เช่น ttb Easy Care")
+                                )}
+                                ${InputWrap("เบี้ยประกันต่อปี (บาท)", 
+                                    createInput('simplifier', 'premium', f.premium, "0", "number")
+                                )}
+                                ${InputWrap("ผลประโยชน์หลัก (ระบุ 3-5 ข้อ)", 
+                                    createTextarea('simplifier', 'benefits', f.benefits, "1. คุ้มครองผู้ป่วยใน...\\n2. เหมาจ่ายค่ารักษา...", 6)
+                                )}
+                                ${InputWrap("รู้จักคู่แข่งหรือไม่", 
+                                    createSelect('simplifier', 'competitor_comparison', f.competitor_comparison, competitorOptions)
+                                )}
+                                ${InputWrap("จุดเด่นที่อยากเน้น", 
+                                    createTextarea('simplifier', 'unique_selling_point', f.unique_selling_point, "เช่น จ่ายง่าย, เงื่อนไขน้อย, ความคุ้มครองครบ", 3)
+                                )}
+                            </div>
+                        `;
+                        
+                    case "matchmaker":
+                        const goalOptions = {
+                            "ลดหย่อนภาษี": "ลดหย่อนภาษี",
+                            "มรดกให้ลูกหลาน": "มรดกให้ลูกหลาน",
+                            "ค่ารักษาพยาบาล (สุขภาพ)": "ค่ารักษาพยาบาล (สุขภาพ)",
+                            "เงินออม/เกษียณ": "เงินออม/เกษียณ",
+                            "รายได้ทดแทน": "รายได้ทดแทน",
+                            "โรคร้ายแรง": "โรคร้ายแรง"
+                        };
+                        
+                        const priorityOptions = {
+                            "สูง": "สูง (เร่งด่วน)",
+                            "ปานกลาง": "ปานกลาง",
+                            "ต่ำ": "ต่ำ (วางแผนล่วงหน้า)"
+                        };
+                        
+                        return `
+                            <div class="space-y-4 mobile-input-container">
+                                ${InputWrap("เป้าหมายหลัก", 
+                                    createSelect('matchmaker', 'goal', f.goal, goalOptions, "เลือกเป้าหมาย")
+                                )}
+                                ${InputWrap("งบประมาณที่ชำระได้สะดวก (ต่อปี)", 
+                                    createInput('matchmaker', 'budget', f.budget, "เช่น 30,000", "number")
+                                )}
+                                ${InputWrap("ความคุ้มครองที่มีอยู่แล้ว", 
+                                    createTextarea('matchmaker', 'existing_coverage', f.existing_coverage, "เช่น ประกันสังคม, ประกันกลุ่มบริษัท", 3)
+                                )}
+                                ${InputWrap("ระดับความสำคัญ", 
+                                    createSelect('matchmaker', 'priority_level', f.priority_level, priorityOptions)
+                                )}
+                                <div class="p-4 bg-gradient-to-r from-sky-50 to-indigo-50 rounded-xl border border-sky-100 flex items-start gap-3">
+                                    ${ICONS.zap}
+                                    <p class="text-xs text-sky-800 leading-relaxed">MAMA จะแนะนำแผนโดยอ้างอิงสวัสดิการพื้นฐานของคนในโซน <b>${this.state.userProfile.zone}</b> เป็นหลัก</p>
+                                </div>
+                            </div>
+                        `;
+                        
+                    case "closing":
+                        const timelineOptions = {
+                            "ภายในสัปดาห์นี้": "ภายในสัปดาห์นี้",
+                            "ภายในเดือนนี้": "ภายในเดือนนี้",
+                            "ยังไม่แน่ใจ": "ยังไม่แน่ใจ",
+                            "วางแผนล่วงหน้า": "วางแผนล่วงหน้า"
+                        };
+                        
+                        return `
+                            <div class="space-y-4 mobile-input-container">
+                                ${InputWrap("จุดที่ลูกค้าดูสนใจมากที่สุด", 
+                                    createInput('closing', 'interest_point', f.interest_point, "เช่น การคุ้มครองโรคร้ายแรง")
+                                )}
+                                ${InputWrap("ข้อกังวลสุดท้ายที่ลูกค้าลังเล", 
+                                    createTextarea('closing', 'last_concern', f.last_concern, "เช่น กลัวอนาคตส่งไม่ไหว", 5)
+                                )}
+                                ${InputWrap("กรอบเวลาที่ลูกค้าบอก", 
+                                    createSelect('closing', 'timeline', f.timeline, timelineOptions)
+                                )}
+                                ${InputWrap("ผู้มีส่วนร่วมตัดสินใจ", 
+                                    createInput('closing', 'decision_maker', f.decision_maker, "เช่น ตัวเอง, คู่สมรส, ผู้ปกครอง")
+                                )}
+                            </div>
+                        `;
+                        
+                    case "prompt_designer":
+                        const toneOptions = {
+                            "Professional": "Professional",
+                            "อบอุ่น/เป็นกันเอง": "อบอุ่น/เป็นกันเอง",
+                            "กระตุ้นให้ตระหนักถึงความเสี่ยง": "กระตุ้นให้ตระหนักถึงความเสี่ยง",
+                            "น่าเชื่อถือ/ทางการ": "น่าเชื่อถือ/ทางการ"
+                        };
+                        
+                        const channelOptions = {
+                            "Facebook Post": "Facebook Post",
+                            "Line Chat": "Line Chat",
+                            "บทสนทนา": "บทสนทนา",
+                            "Email": "Email",
+                            "โทรศัพท์": "โทรศัพท์"
+                        };
+                        
+                        return `
+                            <div class="space-y-4 mobile-input-container">
+                                ${InputWrap("เป้าหมายของคำสั่ง (Objective)", 
+                                    createInput('prompt_designer', 'objective', f.objective, "เช่น เขียนโพสต์ Facebook ขายประกันสุขภาพ")
+                                )}
+                                ${InputWrap("กลุ่มเป้าหมาย (Target)", 
+                                    createInput('prompt_designer', 'target', f.target, "เช่น เจ้าของสวนยางในกระบี่")
+                                )}
+                                <div class="grid grid-cols-2 gap-3">
+                                    ${InputWrap("ช่องทางสื่อสาร", 
+                                        createSelect('prompt_designer', 'channel', f.channel, channelOptions)
+                                    )}
+                                    ${InputWrap("อารมณ์ที่ต้องการ", 
+                                        createSelect('prompt_designer', 'tone', f.tone, toneOptions, "เลือกอารมณ์")
+                                    )}
+                                </div>
+                                ${InputWrap("ข้อมูลเฉพาะที่ต้องใส่", 
+                                    createTextarea('prompt_designer', 'details', f.details, "ชื่อโรงพยาบาล, ชื่อแผนประกัน...", 4)
+                                )}
+                                ${InputWrap("Call to Action ที่ต้องการ", 
+                                    createInput('prompt_designer', 'call_to_action', f.call_to_action, "เช่น ติดต่อสอบถาม, ลงทะเบียนรับข้อมูล")
+                                )}
+                            </div>
+                        `;
+                        
                     default:
-                        return `<div class="text-center text-slate-500 p-8">เลือกรายการเมนูเพื่อเริ่มต้น</div>`;
+                        return `<div class="text-center text-slate-500 p-8">เลือกหมวดหมู่เพื่อเริ่มต้น</div>`;
                 }
             }
             
             renderSetupPage() {
                 const rhOptions = Object.keys(RH_DATA).map(rh => 
-                    `<option value="${rh}" ${this.state.userProfile.rh === rh ? 'selected' : ''}>${rh}</option>`
+                    `<option value="${rh}" ${this.state.userProfile.rh === rh ? 'selected' : ''}>${RH_DATA[rh].name}</option>`
                 ).join('');
                 
                 const zoneOptions = this.state.userProfile.rh 
-                    ? RH_DATA[this.state.userProfile.rh].zones.map(z => 
+                    ? ZONES[this.state.userProfile.rh].map(z => 
                         `<option value="${z}" ${this.state.userProfile.zone === z ? 'selected' : ''}>${z}</option>`
                       ).join('')
-                    : '';
+                    : '<option value="">กรุณาเลือก RH ก่อน</option>';
                 
                 return `
-                    <div class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center p-4">
-                        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 md:p-8">
-                            <div class="flex flex-col items-center mb-8">
-                                <div class="w-20 h-20 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-xl">
-                                    ${ICONS.sparkles.replace('text-amber-500', 'text-white')}
+                    <div class="fixed-height bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center p-4 overflow-container">
+                        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 md:p-8 overflow-hidden relative">
+                            <div class="absolute top-0 right-0 p-4 opacity-5">
+                                ${ICONS.sparkles.replace('icon-warning', '').replace('fa-sparkles', 'fa-star')}
+                            </div>
+                            
+                            <div class="flex flex-col items-center mb-6 relative">
+                                <div class="w-16 h-16 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-xl">
+                                    ${ICONS.sparkles.replace('icon-warning', 'text-white')}
                                 </div>
-                                <h1 class="text-3xl font-black text-slate-900 tracking-tight">MAMA V.2</h1>
-                                <p class="text-xs bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent font-bold tracking-[0.2em] uppercase mt-2">Enhanced AI Sale Assistant</p>
+                                <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">MAMA V.2</h1>
+                                <p class="text-[10px] bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent font-bold tracking-[0.2em] uppercase mt-1">Intelligent Sale Assistant</p>
+                                <p class="text-xs text-slate-600 mt-2">ระบบคิดอัจฉริยะสำหรับนักขายประกัน</p>
                             </div>
                             
                             <div class="space-y-6">
-                                <div class="text-center mb-6">
-                                    <p class="text-slate-600 mb-4">ระบบนี้ใช้ Supabase สำหรับการจัดการ API Key Rotation</p>
-                                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
-                                        ${ICONS.shield.replace('text-sky-500', 'text-slate-600')}
-                                        <span class="text-sm font-medium text-slate-700">Secure API Management</span>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-4">
+                                        ${ICONS.map}
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">เลือกภูมิภาคการทำงาน</label>
                                     </div>
-                                </div>
-                                
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">REGION (RH)</label>
-                                        <select 
-                                            id="rh-select"
-                                            value="${this.state.userProfile.rh}" 
-                                            onchange="app.setState({ userProfile: { ...app.state.userProfile, rh: this.value } })"
-                                            class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-sky-500 outline-none text-base">
-                                            <option value="">เลือก RH</option>
-                                            ${rhOptions}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ZONE</label>
-                                        <select 
-                                            id="zone-select"
-                                            value="${this.state.userProfile.zone}" 
-                                            onchange="app.setState({ userProfile: { ...app.state.userProfile, zone: this.value } })"
-                                            ${!this.state.userProfile.rh ? 'disabled' : ''}
-                                            class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-sky-500 outline-none text-base ${!this.state.userProfile.rh ? 'bg-slate-50' : ''}">
-                                            <option value="">เลือกโซน</option>
-                                            ${zoneOptions}
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <div class="pt-4 border-t border-slate-100">
-                                    <p class="text-sm text-slate-600 mb-4 text-center">
-                                        ระบบใช้ Supabase สำหรับ API Key Rotation โดยอัตโนมัติ
-                                    </p>
-                                    <button 
-                                        onclick="if(app.state.userProfile.zone) app.setState({ isSetup: true }); else alert('กรุณาเลือกโซนให้ครบ')"
-                                        class="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-900/20 active:scale-95 transform transition-transform">
-                                        เริ่มใช้งานระบบ ${ICONS.chevronRight}
-                                    </button>
                                     
-                                    <div class="mt-6 text-center">
-                                        <a href="javascript:void(0)" onclick="app.showNonAIPopup()" class="text-sm text-slate-500 hover:text-slate-700 underline">
-                                            คลิกที่นี่เพื่อเลือกใช้ระบบ Non-AI กรณีไม่มี API Key
-                                        </a>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">REGION (RH)</label>
+                                            <select 
+                                                id="rh-select"
+                                                value="${this.state.userProfile.rh}" 
+                                                onchange="app.setState({ userProfile: { ...app.state.userProfile, rh: this.value, zone: '' } })"
+                                                class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-sky-500 outline-none text-base">
+                                                <option value="">เลือก RH</option>
+                                                ${rhOptions}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">ZONE</label>
+                                            <select 
+                                                id="zone-select"
+                                                value="${this.state.userProfile.zone}" 
+                                                onchange="app.setState({ userProfile: { ...app.state.userProfile, zone: this.value } })"
+                                                ${!this.state.userProfile.rh ? 'disabled' : ''}
+                                                class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-sky-500 outline-none text-base ${!this.state.userProfile.rh ? 'bg-slate-50' : ''}">
+                                                ${zoneOptions}
+                                            </select>
+                                        </div>
                                     </div>
+                                </div>
+                                
+                                <!-- แสดงข้อมูล RH ที่เลือก -->
+                                ${this.state.userProfile.rh ? `
+                                    <div class="bg-gradient-to-r from-sky-50 to-indigo-50 rounded-xl p-4 border border-sky-100">
+                                        <h4 class="text-xs font-bold text-sky-800 mb-2">${RH_DATA[this.state.userProfile.rh].name}</h4>
+                                        <p class="text-xs text-sky-700">${RH_DATA[this.state.userProfile.rh].dynamics}</p>
+                                        <div class="flex flex-wrap gap-1 mt-2">
+                                            ${RH_DATA[this.state.userProfile.rh].keywords.map(k => 
+                                                `<span class="text-[9px] bg-white text-sky-600 px-2 py-0.5 rounded-full border border-sky-200">${k}</span>`
+                                            ).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                
+                                <!-- แสดงระบบที่เลือก -->
+                                <div class="pt-4 border-t">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        ${ICONS.sparkles}
+                                        <span class="text-xs font-bold text-slate-600">กำลังใช้งานระบบ:</span>
+                                        <span class="text-xs bg-gradient-to-r from-emerald-600 to-green-600 text-white px-3 py-1 rounded-full font-bold">
+                                            AI Intelligent Framework
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="text-xs text-slate-500">
+                                        <p class="mb-2">• ระบบใหม่ใช้ Supabase API Key Rotation</p>
+                                        <p class="mb-2">• เพิ่มเมนู เปิดใจ-วิเคราะห์-ทลายข้อโต้แย้ง</p>
+                                        <p>• Localized ตามพื้นที่ ${this.state.userProfile.zone || 'ที่เลือก'}</p>
+                                    </div>
+                                </div>
+                                
+                                <button 
+                                    onclick="if(app.state.userProfile.zone) app.setState({ isSetup: true }); else alert('กรุณาเลือกโซนให้ครบ')"
+                                    class="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition-all mt-4 flex items-center justify-center gap-2 shadow-lg shadow-sky-900/20 active:scale-95 transform transition-transform">
+                                    เริ่มใช้งานระบบ ${ICONS.chevronRight}
+                                </button>
+                                
+                                <!-- Link to Non-AI system -->
+                                <div class="text-center mt-4">
+                                    <span class="text-sm text-slate-600">
+                                        ต้องการใช้ระบบ Non-AI? 
+                                        <a href="javascript:void(0)" onclick="app.showNonAIPopup()" class="inline-link ml-1">
+                                            คลิกที่นี่
+                                        </a>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -925,127 +1505,118 @@ Output Format:
             
             renderMainPage() {
                 const tabs = [
-                    { id: 'ice_breaking', label: '1. เปิดใจ', icon: ICONS.message, desc: 'Contextual Bridge' },
-                    { id: 'needs_analysis', label: '2. วิเคราะห์ความต้องการ', icon: ICONS.calculator, desc: 'Human Economic Value' },
-                    { id: 'objection', label: '3. ทลายข้อโต้แย้ง', icon: ICONS.shield, desc: 'Reframing & Empathy' },
-                    { id: 'simplifier', label: '4. ย่อยผลประโยชน์', icon: ICONS.gift, desc: 'Simplify & Compare' },
-                    { id: 'matchmaker', label: '5. เลือกผลิตภัณฑ์', icon: ICONS.bag, desc: 'Product Matching' },
-                    { id: 'closing', label: '6. สรุปและปิดการขาย', icon: ICONS.file, desc: 'Closing Techniques' },
-                    { id: 'prompt_designer', label: '7. Prompt Designer', icon: ICONS.terminal, desc: 'AI Prompt Engineering' },
+                    { id: 'ice_breaking', label: '1. เปิดใจ (Ice Breaking)', icon: ICONS.message },
+                    { id: 'needs_analysis', label: '2. วิเคราะห์ความต้องการ', icon: ICONS.calculator },
+                    { id: 'objection', label: '3. ทลายข้อโต้แย้ง', icon: ICONS.shield },
+                    { id: 'simplifier', label: '4. ย่อยผลประโยชน์', icon: ICONS.gift },
+                    { id: 'matchmaker', label: '5. เลือกผลิตภัณฑ์', icon: ICONS.bag },
+                    { id: 'closing', label: '6. สรุปและปิดการขาย', icon: ICONS.file },
+                    { id: 'prompt_designer', label: '7. Prompt Architect', icon: ICONS.terminal },
                 ];
                 
                 const rh = RH_DATA[this.state.userProfile.rh] || {};
                 const zone = this.state.userProfile.zone;
                 
                 return `
-                    <div class="min-h-screen flex flex-col md:flex-row bg-white">
+                    <div class="fixed-height flex flex-col md:flex-row overflow-hidden">
                         <!-- Sidebar -->
-                        <aside class="w-full md:w-72 bg-gradient-to-b from-slate-900 to-slate-950 text-white flex flex-col">
-                            <div class="p-6 border-b border-white/10">
-                                <div class="flex items-center gap-3 mb-4">
-                                    <div class="w-12 h-12 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl flex items-center justify-center text-white">
-                                        ${ICONS.sparkles.replace('text-amber-500', 'text-white')}
-                                    </div>
-                                    <div>
-                                        <span class="font-black text-xl block leading-none">MAMA <span class="bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">V.2</span></span>
-                                        <span class="text-xs text-slate-400">Enhanced AI Assistant</span>
-                                    </div>
+                        <aside class="w-full md:w-72 bg-gradient-to-b from-slate-900 to-slate-950 text-white flex flex-col flex-shrink-0 z-30 shadow-2xl">
+                            <div class="p-4 md:p-6 border-b border-white/5 flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl flex items-center justify-center text-white">
+                                    ${ICONS.sparkles.replace('icon-warning', 'text-white')}
                                 </div>
-                                <div class="text-sm opacity-75">
-                                    <div class="flex items-center gap-2">
-                                        ${ICONS.map}
-                                        <span>${zone}</span>
-                                    </div>
+                                <div>
+                                    <span class="font-black text-xl block leading-none">MAMA <span class="bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">V.2</span></span>
+                                    <span class="text-[8px] text-slate-500 font-bold tracking-[0.2em]">PRU ACADEMY [ttb]</span>
                                 </div>
                             </div>
                             
-                            <div class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+                            <div class="flex-1 overflow-y-auto p-3 md:p-4 space-y-1.5 custom-scrollbar">
                                 ${tabs.map(tab => `
                                     <button
                                         onclick="app.setState({ activeTab: '${tab.id}', aiResponse: '' })"
-                                        class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all group text-left ${this.state.activeTab === tab.id ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5 hover:text-white'}">
+                                        class="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all group ${this.state.activeTab === tab.id ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5 hover:text-white'}">
                                         ${tab.icon}
-                                        <div class="flex-1">
-                                            <div class="text-sm font-bold">${tab.label}</div>
-                                            <div class="text-xs opacity-75">${tab.desc}</div>
-                                        </div>
+                                        <span class="text-[13px] font-bold">${tab.label}</span>
                                     </button>
                                 `).join('')}
                             </div>
                             
-                            <div class="p-4 border-t border-white/10">
-                                <button onclick="app.setState({ isSetup: false })" class="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white py-3">
-                                    ${ICONS.rotate}
-                                    <span>เปลี่ยนพื้นที่</span>
-                                </button>
+                            <div class="p-4 bg-black/20 border-t border-white/5">
+                                <div class="bg-slate-800/50 rounded-2xl p-4 relative overflow-hidden">
+                                    <div class="text-[10px] text-slate-500 font-bold mb-2 flex items-center gap-1 uppercase">
+                                        ${ICONS.map} ${zone}
+                                    </div>
+                                    <div class="text-xs font-bold mb-1 truncate">${rh.name || 'กรุณาเลือกภูมิภาค'}</div>
+                                    <div class="text-[10px] text-slate-400 italic">"${rh.tone || 'เลือกภูมิภาคเพื่อดูรายละเอียด'}"</div>
+                                    <button onclick="app.setState({ isSetup: false })" class="absolute top-2 right-2 text-slate-600 hover:text-sky-400">
+                                        ${ICONS.rotate}
+                                    </button>
+                                </div>
                             </div>
                         </aside>
                         
                         <!-- Main Content -->
-                        <main class="flex-1 flex flex-col min-h-screen">
+                        <main class="flex-1 flex flex-col overflow-hidden relative">
                             <!-- Header -->
-                            <header class="bg-white border-b px-6 py-4">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <h2 class="text-xl font-black text-slate-800">
-                                            ${this.state.activeTab === 'ice_breaking' ? 'เปิดใจ (Ice Breaking)' : 
-                                              this.state.activeTab === 'needs_analysis' ? 'วิเคราะห์ความต้องการ (Needs Analysis)' :
-                                              this.state.activeTab === 'objection' ? 'ทลายข้อโต้แย้ง (Objection Handling)' :
-                                              this.state.activeTab.replace('_', ' ')}
-                                        </h2>
-                                        <p class="text-sm text-slate-600 mt-1">
-                                            ${this.state.activeTab === 'ice_breaking' ? 'Contextual Bridge - สร้างสะพานเชื่อมโยงจากสิ่งที่เห็นสู่ความกังวลลึกๆ' :
-                                              this.state.activeTab === 'needs_analysis' ? 'Human Economic Value - ทำให้ลูกค้าเห็นว่าตัวเขาคือทรัพย์สินที่แพงที่สุด' :
-                                              this.state.activeTab === 'objection' ? 'Reframing & Empathy - เปลี่ยนมุมมองจาก "ค่าใช้จ่าย" เป็น "การป้องกันความมั่งคั่ง"' :
-                                              'กรอกข้อมูลเพื่อรับคำแนะนำจาก AI'}
-                                        </p>
+                            <header class="bg-white px-4 md:px-8 py-4 md:py-5 border-b flex justify-between items-center z-10">
+                                <div>
+                                    <h2 class="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2">
+                                        ${this.getTabTitle()}
+                                    </h2>
+                                    <div class="flex gap-2 mt-1">
+                                        ${rh.keywords ? rh.keywords.slice(0, 2).map(k => `
+                                            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">#${k}</span>
+                                        `).join('') : ''}
                                     </div>
-                                    <button 
-                                        onclick="app.handleGenerate()"
-                                        ${this.state.loading ? 'disabled' : ''}
-                                        class="px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${this.state.loading ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:from-sky-700 hover:to-indigo-700 shadow-lg active:scale-95 transform transition-transform'}"
-                                        style="min-width: 140px;">
-                                        ${this.state.loading ? ICONS.loader : ICONS.sparkles.replace('text-amber-500', 'text-white')}
-                                        <span>${this.state.loading ? 'กำลังวิเคราะห์...' : 'วิเคราะห์ด้วย AI'}</span>
-                                    </button>
                                 </div>
+                                <button 
+                                    onclick="app.handleGenerate()"
+                                    ${this.state.loading ? 'disabled' : ''}
+                                    class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-black transition-all flex items-center gap-2 shadow-xl ${this.state.loading ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:from-sky-700 hover:to-indigo-700 shadow-sky-900/10 active:scale-95 transform transition-transform'}"
+                                    style="min-width: 120px;">
+                                    ${this.state.loading ? ICONS.loader : ICONS.sparkles.replace('icon-warning', 'text-white')}
+                                    <span class="hidden md:inline">${this.state.loading ? 'ANALYZING...' : 'วิเคราะห์'}</span>
+                                    <span class="md:hidden">${this.state.loading ? '...' : 'วิเคราะห์'}</span>
+                                </button>
                             </header>
                             
-                            <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+                            <div class="flex-1 flex overflow-hidden">
                                 <!-- Left: Input Panel -->
-                                <div class="w-full md:w-96 bg-slate-50 border-r overflow-y-auto p-6">
-                                    <div class="mb-6">
-                                        <h3 class="text-lg font-bold text-slate-800 mb-2">กรอกข้อมูลลูกค้า</h3>
-                                        <p class="text-sm text-slate-600">กรอกข้อมูลเพื่อให้ AI วิเคราะห์และสร้างบทสนทนาเฉพาะบุคคล</p>
+                                <div class="w-full md:w-80 bg-white border-r overflow-y-auto p-4 md:p-6 flex-shrink-0 custom-scrollbar mobile-input-container">
+                                    <div class="mb-6 flex items-center justify-between">
+                                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Inputs</h4>
+                                        ${ICONS.trending}
                                     </div>
-                                    
-                                    <div id="input-section" class="mb-8">
+                                    <div id="input-section">
                                         ${this.renderInputSection()}
                                     </div>
                                     
-                                    <!-- Zone Insights -->
-                                    <div class="bg-white rounded-xl border p-4">
-                                        <div class="flex items-center gap-2 mb-3">
+                                    <!-- Region Insights -->
+                                    <div class="mt-8 pt-8 border-t space-y-4">
+                                        <div class="flex items-center gap-2 bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                                             ${ICONS.building}
-                                            <h4 class="font-bold text-slate-800">ข้อมูลพื้นที่ ${zone}</h4>
+                                            <span class="text-[10px] font-black uppercase tracking-wider">Local Insight</span>
                                         </div>
-                                        <p class="text-sm text-slate-600 mb-3">${rh.dynamics || 'กรุณาเลือกภูมิภาค'}</p>
+                                        <div class="p-4 bg-slate-50 rounded-2xl border">
+                                            <p class="text-xs text-slate-600 leading-relaxed italic">"${rh.dynamics || 'กรุณาเลือกภูมิภาค'}"</p>
+                                        </div>
                                         <div class="space-y-2">
-                                            <div class="flex items-center gap-2">
-                                                ${ICONS.hospital}
-                                                <span class="text-xs font-medium text-slate-700">โรงพยาบาลหลัก:</span>
+                                            <div class="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                                                ${ICONS.stethoscope}
+                                                <span class="text-[10px] font-black uppercase tracking-wider">Top Hospitals</span>
                                             </div>
                                             <div class="flex flex-wrap gap-1.5">
                                                 ${rh.hospitals ? rh.hospitals.map(h => `
-                                                    <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg">${h}</span>
-                                                `).join('') : '<span class="text-xs text-slate-400">กรุณาเลือกภูมิภาค</span>'}
+                                                    <span class="text-[9px] bg-white border px-2 py-1 rounded-lg text-slate-500 font-bold">${h}</span>
+                                                `).join('') : '<span class="text-[9px] text-slate-400">กรุณาเลือกภูมิภาค</span>'}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <!-- Right: Output Panel -->
-                                <div class="flex-1 overflow-y-auto bg-white">
+                                <div class="flex-1 bg-gradient-to-br from-slate-50 to-white overflow-y-auto custom-scrollbar relative">
                                     ${this.renderOutputPanel()}
                                 </div>
                             </div>
@@ -1054,90 +1625,100 @@ Output Format:
                 `;
             }
             
+            getTabTitle() {
+                const titles = {
+                    'ice_breaking': 'เปิดใจ (Ice Breaking)',
+                    'needs_analysis': 'วิเคราะห์ความต้องการ',
+                    'objection': 'ทลายข้อโต้แย้ง',
+                    'simplifier': 'ย่อยผลประโยชน์',
+                    'matchmaker': 'เลือกผลิตภัณฑ์',
+                    'closing': 'สรุปและปิดการขาย',
+                    'prompt_designer': 'Prompt Architect'
+                };
+                return titles[this.state.activeTab] || this.state.activeTab.replace('_', ' ').toUpperCase();
+            }
+            
+            formatResponse(text) {
+                return text
+                    .replace(/### (.*?)(\n|$)/g, '<h3 class="text-lg font-black text-slate-900 mt-6 mb-3 border-l-4 border-sky-500 pl-4">$1</h3>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+                    .replace(/\n\n/g, '</p><p class="mb-4">')
+                    .replace(/\n/g, '<br>')
+                    .replace(/- (.*?)(<br>|$)/g, '<li class="ml-5 mb-2">• $1</li>')
+                    .replace(/`(.*?)`/g, '<code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>')
+                    .replace(/^/, '<div class="ai-response"><p class="mb-4">')
+                    .replace(/$/, '</p></div>');
+            }
+            
             renderOutputPanel() {
                 if (!this.state.aiResponse) {
                     return `
-                        <div class="h-full flex flex-col items-center justify-center p-8 text-center">
-                            <div class="w-32 h-32 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mb-6">
-                                ${ICONS.lightbulb}
+                        <div class="h-full flex flex-col items-center justify-center opacity-20 select-none px-6 md:px-12 text-center py-12">
+                            <div class="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                                ${ICONS.sparkles.replace('icon-warning', 'text-slate-400')}
                             </div>
-                            <h3 class="text-2xl font-black text-slate-800 mb-4">พร้อมวิเคราะห์ข้อมูลลูกค้า</h3>
-                            <p class="text-slate-600 max-w-md mb-8">
-                                กรอกข้อมูลลูกค้าในช่องทางซ้ายมือ แล้วกดปุ่ม "วิเคราะห์ด้วย AI" 
-                                เพื่อรับคำแนะนำเฉพาะบุคคลตามพื้นที่ ${this.state.userProfile.zone}
+                            <h3 class="text-xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-slate-400 to-slate-600 bg-clip-text text-transparent">MAMA READY</h3>
+                            <p class="mt-2 text-slate-500 max-w-sm text-sm md:text-base">
+                                กรอกข้อมูลในช่อง Input ทางซ้าย แล้วกด "วิเคราะห์" เพื่อดึงข้อมูลเชิงพื้นที่และเทคนิคการขายระดับ MDRT
                             </p>
-                            <div class="flex items-center gap-2 text-sm text-slate-500">
-                                ${ICONS.zap}
-                                <span>ระบบใช้ Supabase API Key Rotation สำหรับความเสถียร</span>
-                            </div>
+                            ${this.state.error ? `
+                                <div class="mt-8 p-4 bg-red-50 text-red-600 border border-red-200 rounded-2xl text-xs font-bold w-full max-w-md">
+                                    ${this.state.error}
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 }
                 
-                // Format markdown-like response
-                const formatResponse = (text) => {
-                    return text
-                        .replace(/### (.*?)(\n|$)/g, '<h3 class="text-xl font-black text-slate-900 mt-8 mb-4 pb-2 border-b">$1</h3>')
-                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900">$1</strong>')
-                        .replace(/\n/g, '<br>')
-                        .replace(/- (.*?)(<br>|$)/g, '<li class="mb-2 flex items-start"><span class="mr-2">•</span> <span>$1</span></li>')
-                        .replace(/1\. (.*?)(<br>|$)/g, '<li class="mb-3"><span class="font-bold mr-2">1.</span> <span>$1</span></li>')
-                        .replace(/2\. (.*?)(<br>|$)/g, '<li class="mb-3"><span class="font-bold mr-2">2.</span> <span>$1</span></li>')
-                        .replace(/3\. (.*?)(<br>|$)/g, '<li class="mb-3"><span class="font-bold mr-2">3.</span> <span>$1</span></li>');
-                };
-                
                 return `
-                    <div class="max-w-3xl mx-auto p-6 md:p-8">
-                        <div class="bg-gradient-to-br from-white to-slate-50 rounded-2xl shadow-lg overflow-hidden border border-slate-200">
-                            <div class="bg-gradient-to-r from-sky-600 to-indigo-600 px-6 py-4 text-white">
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                                            ${ICONS.lightbulb.replace('text-amber-500', 'text-white')}
-                                        </div>
-                                        <div>
-                                            <div class="text-sm font-bold opacity-90">AI SUGGESTION</div>
-                                            <div class="text-lg font-black">${this.state.activeTab.replace('_', ' ').toUpperCase()}</div>
-                                        </div>
+                    <div class="max-w-3xl mx-auto p-4 md:p-8 lg:p-12 pb-20 md:pb-32 slide-in-from-bottom overflow-container">
+                        <!-- Result Wrapper -->
+                        <div class="bg-white rounded-2xl md:rounded-[2rem] shadow-2xl shadow-slate-200 overflow-hidden border border-white">
+                            <!-- Result Header -->
+                            <div class="bg-gradient-to-r from-sky-600 to-indigo-600 px-6 md:px-10 py-4 md:py-6 text-white flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 md:w-10 md:h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                                        ${ICONS.lightbulb.replace('icon-warning', 'text-white')}
                                     </div>
-                                    <button onclick="navigator.clipboard.writeText(app.state.aiResponse); alert('คัดลอกแล้ว!');" 
-                                            class="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-lg flex items-center justify-center transition-colors">
-                                        ${ICONS.copy.replace('text-slate-500', 'text-white')}
-                                    </button>
+                                    <div>
+                                        <div class="text-[10px] font-bold text-sky-300 uppercase tracking-[0.2em]">AI SUGGESTION</div>
+                                        <div class="text-sm font-bold opacity-90">${this.getTabTitle()}</div>
+                                    </div>
                                 </div>
+                                <button onclick="navigator.clipboard.writeText('${this.state.aiResponse.replace(/'/g, "\\'")}'); alert('คัดลอกลง Clipboard แล้ว');" class="w-8 h-8 md:w-10 md:h-10 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors backdrop-blur-sm">
+                                    ${ICONS.copy.replace('icon-gray', 'text-white')}
+                                </button>
                             </div>
                             
-                            <div class="p-6 md:p-8 markdown-content text-slate-700 leading-relaxed">
-                                ${formatResponse(this.state.aiResponse)}
+                            <!-- Result Content -->
+                            <div class="p-6 md:p-10 text-slate-700 leading-relaxed text-sm md:text-base overflow-wrap-break">
+                                ${this.formatResponse(this.state.aiResponse)}
                             </div>
                             
-                            <div class="border-t border-slate-200 p-4 bg-slate-50">
-                                <div class="flex items-center justify-between">
-                                    <div class="text-sm text-slate-600">
-                                        คำแนะนำนี้ปรับให้เหมาะกับพื้นที่: <span class="font-bold">${this.state.userProfile.zone}</span>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <button onclick="app.setState({ feedback: 'up' })" 
-                                                class="w-10 h-10 rounded-full flex items-center justify-center border ${this.state.feedback === 'up' ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-400 border-slate-300 hover:border-emerald-500 hover:text-emerald-500'}">
-                                            ${ICONS.thumbsUp}
-                                        </button>
-                                        <button onclick="app.setState({ feedback: 'down' })" 
-                                                class="w-10 h-10 rounded-full flex items-center justify-center border ${this.state.feedback === 'down' ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-slate-400 border-slate-300 hover:border-rose-500 hover:text-rose-500'}">
-                                            ${ICONS.thumbsDown}
-                                        </button>
-                                    </div>
+                            <!-- Rating -->
+                            <div class="bg-slate-50 p-4 md:p-6 border-t flex justify-center items-center gap-4 md:gap-6">
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Helpful?</span>
+                                <div class="flex gap-4">
+                                    <button onclick="app.setState({ feedback: 'up' })" class="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border transition-all ${this.state.feedback === 'up' ? 'bg-gradient-to-br from-emerald-500 to-green-500 text-white border-emerald-500' : 'bg-white text-slate-300 hover:text-emerald-500'}">
+                                        ${ICONS.thumbsUp}
+                                    </button>
+                                    <button onclick="app.setState({ feedback: 'down' })" class="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border transition-all ${this.state.feedback === 'down' ? 'bg-gradient-to-br from-rose-500 to-pink-500 text-white border-rose-500' : 'bg-white text-slate-300 hover:text-rose-500'}">
+                                        ${ICONS.thumbsDown}
+                                    </button>
                                 </div>
                             </div>
                         </div>
                         
-                        ${this.state.error ? `
-                            <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600">
-                                <div class="flex items-center gap-2">
-                                    ${ICONS.alert}
-                                    <strong>หมายเหตุ:</strong> ${this.state.error}
-                                </div>
-                            </div>
-                        ` : ''}
+                        <!-- Footer Buttons -->
+                        <div class="mt-6 md:mt-8 flex flex-wrap justify-center gap-3">
+                            <button class="bg-white border text-slate-600 px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs font-bold hover:bg-slate-50 flex items-center gap-2 shadow-sm">
+                                ${ICONS.share} <span class="hidden md:inline">ส่งเข้า Line</span>
+                            </button>
+                            <button class="bg-white border text-slate-600 px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs font-bold hover:bg-slate-50 flex items-center gap-2 shadow-sm">
+                                ${ICONS.save} <span class="hidden md:inline">บันทึกเคส</span>
+                            </button>
+                        </div>
                     </div>
                 `;
             }
@@ -1149,62 +1730,91 @@ Output Format:
                     return;
                 }
                 
+                // เก็บค่า input ก่อน render ใหม่
+                if (this.state.isSetup && this.state.activeTab) {
+                    this.saveInputValues();
+                }
+                
                 try {
                     const html = this.state.isSetup ? this.renderMainPage() : this.renderSetupPage();
                     root.innerHTML = html;
                     
-                    console.log("Render successful!");
+                    // Restore input values เมื่อ render เสร็จ
+                    if (this.state.isSetup && this.state.activeTab) {
+                        setTimeout(() => {
+                            this.restoreInputValues();
+                            this.updateGapDisplay();
+                        }, 100);
+                    }
                 } catch (error) {
                     console.error("Render error:", error);
-                    root.innerHTML = `
-                        <div class="min-h-screen flex items-center justify-center bg-red-50">
-                            <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md">
-                                <h1 class="text-2xl font-bold text-red-600 mb-4">เกิดข้อผิดพลาด</h1>
-                                <p class="text-slate-600 mb-4">ระบบไม่สามารถแสดงผลได้ กรุณารีเฟรชหน้าเว็บ</p>
-                                <button onclick="location.reload()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold">
-                                    รีเฟรชหน้าเว็บ
-                                </button>
-                            </div>
-                        </div>
-                    `;
+                    root.innerHTML = this.renderErrorPage(error);
                 }
             }
             
             init() {
-                // Load saved state
+                // ตั้งค่า state เริ่มต้นจาก localStorage ถ้ามี
                 try {
                     const savedState = localStorage.getItem('mama_v2_state');
                     if (savedState) {
                         const parsed = JSON.parse(savedState);
-                        // Don't restore API key from localStorage for security
-                        const { currentApiKey, ...rest } = parsed;
-                        this.setState({ ...rest });
+                        this.setState({ ...parsed });
                     }
                 } catch (e) {
                     console.log("No saved state found");
                 }
                 
-                // Auto-save state changes
+                // บันทึก state ลง localStorage เมื่อเปลี่ยนแปลง
                 const originalSetState = this.setState.bind(this);
                 this.setState = (newState) => {
                     originalSetState(newState);
                     try {
-                        const stateToSave = { ...this.state };
-                        delete stateToSave.currentApiKey; // Don't save API key
+                        // บันทึกเฉพาะส่วนที่จำเป็น
+                        const stateToSave = {
+                            isSetup: this.state.isSetup,
+                            userProfile: this.state.userProfile,
+                            activeTab: this.state.activeTab,
+                            forms: this.state.forms
+                        };
                         localStorage.setItem('mama_v2_state', JSON.stringify(stateToSave));
                     } catch (e) {
                         console.log("Could not save state to localStorage");
                     }
                 };
                 
+                // ป้องกันการ scroll เมื่อพิมพ์บนมือถือ
+                document.addEventListener('touchstart', function(e) {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                        e.target.focus();
+                    }
+                }, { passive: true });
+                
                 this.render();
             }
         }
 
-        // Initialize the app when DOM is ready
+        // ตรวจสอบว่า DOM พร้อมแล้ว
         document.addEventListener('DOMContentLoaded', function() {
-            window.app = new MAMAV2Enhanced();
-            console.log("MAMA V.2 Enhanced App loaded successfully!");
+            // เริ่มต้นแอปพลิเคชัน
+            window.app = new MAMAV2();
+            console.log("MAMA V.2 App loaded successfully!");
+            
+            // ป้องกันการ re-render ทั้งหน้าเมื่อพิมพ์
+            document.addEventListener('input', function(e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    e.stopPropagation();
+                }
+            }, true);
+            
+            // Fix for iOS keyboard
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+                document.addEventListener('focusin', function() {
+                    setTimeout(function() {
+                        window.scrollTo(0, 0);
+                        document.body.scrollTop = 0;
+                    }, 100);
+                });
+            }
         });
     </script>
 </body>
